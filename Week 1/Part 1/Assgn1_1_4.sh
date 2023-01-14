@@ -1,4 +1,4 @@
-#! /bin/sh
+#! /bin/bash
 
 function gcd() {
 	local a=$1
@@ -18,7 +18,7 @@ function lcm() {
 
 res=1
 
-for i in $(rev $1); do
+for i in $(rev $1 | sed -Ee 's/\s+//g'); do
 	res=$(lcm $i $res)
 done
 
