@@ -12,14 +12,10 @@ function gcd() {
 	echo $a
 }
 
-function lcm() {
-	echo $(($1 / $(gcd $1 $2) * $2))
-}
-
 res=1
 
-for i in $(rev $1 | sed -Ee 's/\s+//g'); do
-	res=$(lcm $i $res)
+for i in $(rev $1); do
+	res=$(($res / $(gcd $i $res) * $i))
 done
 
 echo $res
