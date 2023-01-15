@@ -1,6 +1,9 @@
-#! /bin/bash
+#! /bin/sh
 
-function gcd() {
+fn=0
+res=1
+
+gcd() {
 	local a=$1
 	local b=$2
 	local t
@@ -9,13 +12,12 @@ function gcd() {
 		let a=b
 		let b=$((t % b))
 	done
-	echo $a
+	fn=$a
 }
 
-res=1
-
 for i in $(rev $1); do
-	res=$(($res / $(gcd $i $res) * $i))
+	gcd $i $res
+	res=$((res / fn * i))
 done
 
 echo $res
