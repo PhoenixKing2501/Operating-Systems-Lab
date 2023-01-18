@@ -1,0 +1,4 @@
+alternating case: always convert first character of line to upper case and decide the next characters accordingly (verified by TA)
+
+In sed to perform multiple commands on a set of lines selected once, we can stack the operations together inside {} like {op1,op2,...}
+on doing sed -e '/select something/do something 1' -e '/do something 2', do something 2 is performed on all the lines, not only the ones selected by the first -e
