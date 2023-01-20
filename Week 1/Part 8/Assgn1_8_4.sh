@@ -22,7 +22,7 @@ fi
 # { head -n 1 "./main.csv" && tail -n +2 "./main.csv" | sort -t, -k1.7,1.10n -k1.4,1.5n -k1.1,1.2n; } | tee "./main.csv"
 
 var=`cat main.csv`
-echo "$var"|( head -n 1  && tail -n +2 | sort -t, -k1.7,1.10n -k1.4,1.5n -k1.1,1.2n; ) > "./main.csv"
+{ echo "$var" | { head -n 1  && tail -n +2 | sort -t, -k1.7,1.10n -k1.4,1.5n -k1.1,1.2n; }; } > "./main.csv"
 
 while getopts "c:n:s:h" arg; do
   case $arg in
