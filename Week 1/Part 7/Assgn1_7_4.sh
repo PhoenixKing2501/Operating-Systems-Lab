@@ -1,12 +1,9 @@
-#! /bin/sh
+#! /bin/bash
 
 chars=({A..Z})
 
 mkdir -p "$2"
-for ((i = 0; i < 26; i++)); do
-	touch "$2/${chars[i]}.txt"
-done
 
-for ((i = 0; i < 26; i++)); do
-	grep -hori "^${chars[i]}.*" "$1" | sort >"$2/${chars[i]}.txt"
+for i in $(seq 0 25); do
+	grep -hori "^${chars[i]}.*" "$1" | sort -fo "$2/${chars[i]}.txt"
 done
