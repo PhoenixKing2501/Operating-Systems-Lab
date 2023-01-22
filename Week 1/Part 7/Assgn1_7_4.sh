@@ -1,4 +1,3 @@
-#! /bin/bash
 chars=({A..Z})
 mkdir -p "$2"
 for i in $(seq 0 25); do
