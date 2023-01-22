@@ -1,6 +1,5 @@
 N=1000000
-declare -a minfac
-minfac[1]=1
+minfac=([1]=1)
 
 for ((i = 2; i <= N; i++)); do
 	minfac[i]=$i
@@ -15,7 +14,7 @@ for ((i = 2; i * i <= N; i++)); do
 	fi
 done
 
-echo -n "" >output.txt.gz
+cat /dev/null >output.txt.gz
 
 cat input.txt | while read n; do
 	while [ $n -gt 1 ]; do
