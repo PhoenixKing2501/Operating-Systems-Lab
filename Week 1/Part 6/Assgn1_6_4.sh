@@ -1,47 +1,35 @@
 #! /bin/bash
 
 N=1000000
-declare -a isprime
-isprime[1]=0
-
+declare -a minfac
+minfac[1]=1
 
 for (( i=2; i<=N; i++ ))
 do
-    isprime[i]=1
+    minfac[i]=$i
 done
-for(( i=2; i<=N; i++ ))
+for (( i=2; i*i<=N; i++ ))
 do
-    if [ ${isprime[i]} -eq 1 ]
+    if [ ${minfac[i]} -eq $i ]
     then
-        for(( j=$(( i * i )); j<=N; j=$(( j + i )) ))
-        do
-            isprime[j]=0
+        for (( j=i*i; j<=N; j+=i ))
+        do 
+            if [ $j -eq ${minfac[j]} ]
+            then
+                minfac[j]=$i
+            fi
         done
     fi
 done
 
-
-echo "sieve done"
-
-primes=" "
-declare -a indices
-indices[1]=0
-for (( i=2; i<=N; i++ ))
-do
-    if [ ${isprime[i]} -eq 1 ]
-    then
-        primes+="$i "
-        indices[i]=$(( ${#primes} - 1 ))
-    else
-        indices[i]=${indices[i-1]}
-    fi
-done
-
-echo "primes list done"
+echo -n "" > output.txt.gz
 
 cat input.txt | while read n
 do
-    echo ${primes:1:${indices[n]}}
-done > output.txt
-
-echo "all done"
+    while [ $n -gt 1 ]
+    do
+        echo -n "${minfac[n]} "
+        n=$(( n/${minfac[n]} ))
+    done | gzip -c >> output.txt.gz
+    echo | gzip -c >> output.txt.gz
+done
