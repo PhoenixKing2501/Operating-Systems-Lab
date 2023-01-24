@@ -20,24 +20,25 @@ awk '{ singleflag = 0;hashflag = 0;quoteflag = 0;}
             }
             multiflag; 
             !mutliflag{
-               for(i=1;i<=NF;i++)
+               n = split($0, clist, "")
+               for(i=1;i<=n;i++)
                 { 
-                    if($i ~ /"/ && quoteflag ==0 && hashflag == 0)   # quote inside hash but not vice versa
+                    if(clist[i] ~ /"/ && quoteflag ==0 && hashflag == 0)   # quote inside hash but not vice versa
                     {
                         quoteflag = 1;
                     }
-                    else if($i=="#" && quoteflag == 0 && hashflag == 0)
+                    else if(clist[i]=="#" && quoteflag == 0 && hashflag == 0)
                         {
                             printf("Line number : %d : ",NR);
                             hashflag=1;
                         } 
-                    else if($i ~ /"/ && quoteflag == 1)
+                    else if(clist[i] ~ /"/ && quoteflag == 1)
                         {
                             quoteflag = 0;
                         }
                     if(hashflag==1)
                         {
-                            printf("%s ",$i);
+                            printf("%s",clist[i]);
                         }
                 }
                 if(hashflag==1)
