@@ -1,5 +1,3 @@
-#! /bin/sh
-
 filter="[ "
 header=""
 if [ $# -gt 2 ]; then
