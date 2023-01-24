@@ -16,7 +16,7 @@ done
 
 cat /dev/null >output.txt.gz
 
-cat input.txt | while read n; do
+for n in $(cat input.txt); do
 	while [ $n -gt 1 ]; do
 		echo -n "${minfac[n]} "
 		n=$((n / ${minfac[n]}))
