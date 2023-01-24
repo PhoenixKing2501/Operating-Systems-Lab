@@ -1,4 +1,4 @@
-# Operating-Systems-Lab
+# Operating Systems Lab
 ## Git Repo of OS Lab
 ### Members
 * Utsav Basu (20CS30057)
