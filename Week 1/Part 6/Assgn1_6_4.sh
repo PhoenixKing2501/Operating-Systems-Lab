@@ -16,10 +16,14 @@ done
 
 cat /dev/null >output.txt.gz
 
-cat input.txt | while read n; do
-	while [ $n -gt 1 ]; do
-		echo -n "${minfac[n]} "
-		n=$((n / ${minfac[n]}))
-	done | gzip -c >>output.txt.gz
-	echo | gzip -c >>output.txt.gz
+for n in $(cat newinput.txt); do
+    if [ $n -eq 1 ]; then
+        echo 1 | gzip -c >>output.txt.gz
+    else
+        while [ $n -gt 1 ]; do
+            printf "${minfac[n]} "
+            n=$((n / ${minfac[n]}))
+        done | gzip -c >>output.txt.gz
+        echo | gzip -c >>output.txt.gz
+    fi
 done
