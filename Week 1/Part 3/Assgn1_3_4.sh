@@ -16,7 +16,3 @@ for entry in `ls "$1"`; do
         jq -r "$filter" "$1/$entry" >> "$2/${entry%.*}.csv"
     fi
 done
-
-
-
-
