@@ -1,8 +1,2 @@
-res=$(gawk '{arr1[$1]++
-            arr2[$2]++}END{for(ele in arr2)l=l ele" "arr2[ele]"\n"
-            for(ele in arr1)if(arr1[ele]==1)cnt++
-            else s=s""ele"\n";print l|"sort -k2,2nr>out.txt"
-            print s""cnt}' $1)
-cat out.txt
-echo $res|sed 's/ /\n/g'
-rm out.txt
+awk '{print $2}' $1|sort|uniq -c|sort -k1,1nr -k2,2|awk '{print $2 " " $1}'
+awk '{print $1}' $1|sort|uniq -c|sort -nr|awk '$1>1{print $2}$1==1{cnt++}END{print cnt}'
