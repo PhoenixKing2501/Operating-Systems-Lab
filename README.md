@@ -1,5 +1,5 @@
-# Operating-Systems-Lab
-## Git Repo of OS Lab
+# Operating Systems Lab
+## Git Repo of OS Lab (Group 4)
 ### Members
 * Utsav Basu (20CS30057)
 * Anamitra Mukhopadhyay (20CS30064)
