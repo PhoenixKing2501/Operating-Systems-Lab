@@ -9,7 +9,7 @@
 #define MAX_ARGS (1 << 10)
 
 char *infile, *outfile;
-// bool bg;
+bool bg;
 
 char *shell_read_line()
 {
@@ -25,7 +25,7 @@ char **shell_input_parse(char *line)
 	char *arg;
 	int position = 0;
 	infile = outfile = NULL;
-	// bg = false;
+	bg = false;
 
 	arg = strtok(line, " \t\n\r");
 	while (arg != NULL &&
@@ -56,10 +56,10 @@ char **shell_input_parse(char *line)
 		// 	cmd = args[0];
 		// 	cmdargs = args;
 		// }
-		// else if (strcmp(arg, "&") == 0)
-		// {
-		// 	bg = true;
-		// }
+		else if (strcmp(arg, "&") == 0)
+		{
+			bg = true;
+		}
 
 		arg = strtok(NULL, " \t\n\r");
 	}
@@ -106,10 +106,13 @@ int shell_execute(char **args)
 	}
 	else
 	{
-		do
+		if (!bg)
 		{
-			waitpid(pid, &status, WUNTRACED);
-		} while (!WIFEXITED(status) && !WIFSIGNALED(status));
+			do
+			{
+				waitpid(pid, &status, WUNTRACED);
+			} while (!WIFEXITED(status) && !WIFSIGNALED(status));
+		}
 	}
 
 	return 1;
