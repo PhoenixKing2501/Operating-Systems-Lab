@@ -6,7 +6,7 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
-#define MAX_ARGS (1 << 10)
+#define MAX_ARGS (1 << 6)
 
 char *infile, *outfile;
 bool bg;
@@ -15,7 +15,20 @@ char *shell_read_line()
 {
 	char *line = NULL;
 	size_t bufsize = 0;
-	getline(&line, &bufsize, stdin);
+
+	if (getline(&line, &bufsize, stdin) == -1)
+	{
+		if (feof(stdin))
+		{
+			exit(EXIT_SUCCESS);
+		}
+		else
+		{
+			perror("shell: getline");
+			exit(EXIT_FAILURE);
+		}
+	}
+
 	return line;
 }
 
@@ -28,12 +41,32 @@ char **shell_input_parse(char *line)
 	bg = false;
 
 	arg = strtok(line, " \t\n\r");
+
 	while (arg != NULL &&
 		   strcmp(arg, "<") != 0 &&
 		   strcmp(arg, ">") != 0 &&
 		   strcmp(arg, "|") != 0 &&
 		   strcmp(arg, "&") != 0)
 	{
+		if (*arg == '\'' || *arg == '\"')
+		{
+			char *temp = strtok(NULL, " \t\n\r");
+			while (temp != NULL)
+			{
+				*(temp - 1) = ' ';
+
+				if (temp[strlen(temp) - 1] == *arg)
+				{
+					break;
+				}
+
+				temp = strtok(NULL, " \t\n\r");
+			}
+
+			*strchr(arg + 1, *arg) = '\0';
+			arg++;
+		}
+
 		args[position] = arg;
 		position++;
 
@@ -78,6 +111,21 @@ int shell_execute(char **args)
 	{
 		return 0;
 	}
+	else if (strcmp(args[0], "cd") == 0)
+	{
+		if (args[1] == NULL)
+		{
+			fprintf(stderr, "shell: expected argument to \"cd\"\n");
+		}
+		else
+		{
+			if (chdir(args[1]) != 0)
+			{
+				perror("shell");
+			}
+		}
+		return 1;
+	}
 
 	pid_t pid;
 	int status;
@@ -106,13 +154,12 @@ int shell_execute(char **args)
 	}
 	else
 	{
-		if (!bg)
+		do
 		{
-			do
-			{
-				waitpid(pid, &status, WUNTRACED);
-			} while (!WIFEXITED(status) && !WIFSIGNALED(status));
-		}
+			if (bg)
+				break;
+			waitpid(pid, &status, WUNTRACED);
+		} while (!WIFEXITED(status) && !WIFSIGNALED(status));
 	}
 
 	return 1;
@@ -128,6 +175,10 @@ int main()
 	{
 		printf("> ");
 		line = shell_read_line();
+		if (line == NULL || *line == '\0')
+		{
+			break;
+		}
 		args = shell_input_parse(line);
 		status = shell_execute(args);
 
