@@ -22,10 +22,12 @@ void handle_sigint(int sig)
 	if (pid > 0)
 	{
 		kill(pid, SIGINT);
+		pid = -1;
 	}
 	else
 	{
 		printf("\n\n> ");
+		fflush(stdin);
 		fflush(stdout);
 	}
 }
@@ -45,6 +47,7 @@ char *shell_read_line()
 	{
 		if (feof(stdin))
 		{
+			puts("exit");
 			exit(EXIT_SUCCESS);
 		}
 		else
@@ -200,11 +203,11 @@ int shell_execute(char **args)
 	pid = -1;
 	int status;
 
-	// if (!is_pipe_end && pipe(new_pipefd) == -1)
-	// {
-	// 	perror("pipe");
-	// 	exit(EXIT_FAILURE);
-	// }
+	if (!is_pipe_end && pipe(new_pipefd) == -1)
+	{
+		perror("pipe");
+		exit(EXIT_FAILURE);
+	}
 
 	pid = fork();
 	if (pid == 0)
@@ -222,25 +225,25 @@ int shell_execute(char **args)
 			freopen(outfile, "w", stdout);
 		}
 
-		// if (!is_pipe_begin)
-		// {
-		// 	close(old_pipefd[1]);
-		// 	if (dup2(old_pipefd[0], STDIN_FILENO) == -1)
-		// 	{
-		// 		perror("dup2");
-		// 		exit(EXIT_FAILURE);
-		// 	}
-		// }
+		if (!is_pipe_begin)
+		{
+			close(old_pipefd[1]);
+			if (dup2(old_pipefd[0], STDIN_FILENO) == -1)
+			{
+				perror("dup2");
+				exit(EXIT_FAILURE);
+			}
+		}
 
-		// if (!is_pipe_end)
-		// {
-		// 	close(new_pipefd[0]);
-		// 	if (dup2(new_pipefd[1], STDOUT_FILENO) == -1)
-		// 	{
-		// 		perror("dup2");
-		// 		exit(EXIT_FAILURE);
-		// 	}
-		// }
+		if (!is_pipe_end)
+		{
+			close(new_pipefd[0]);
+			if (dup2(new_pipefd[1], STDOUT_FILENO) == -1)
+			{
+				perror("dup2");
+				exit(EXIT_FAILURE);
+			}
+		}
 
 		if (execvp((strcmp(args[0], "cls") == 0
 						? "clear"
@@ -257,18 +260,18 @@ int shell_execute(char **args)
 	}
 	else
 	{
-		// if (!is_pipe_begin)
-		// {
-		// 	close(old_pipefd[0]);
-		// }
+		if (!is_pipe_begin)
+		{
+			close(old_pipefd[0]);
+		}
 
-		// old_pipefd[0] = new_pipefd[0];
-		// old_pipefd[1] = new_pipefd[1];
+		old_pipefd[0] = new_pipefd[0];
+		old_pipefd[1] = new_pipefd[1];
 
-		// if (!is_pipe_end)
-		// {
-		// 	close(new_pipefd[1]);
-		// }
+		if (!is_pipe_end)
+		{
+			close(new_pipefd[1]);
+		}
 
 		do
 		{
@@ -276,6 +279,11 @@ int shell_execute(char **args)
 				break;
 			waitpid(pid, &status, WUNTRACED);
 		} while (!WIFEXITED(status) && !WIFSIGNALED(status));
+
+		if (WIFEXITED(status) || WIFSIGNALED(status))
+		{
+			pid = -1;
+		}
 	}
 
 	return 1;
@@ -308,7 +316,7 @@ int main()
 		{
 			if (cmds[i + 1] == NULL)
 			{
-				is_pipe_end = false;
+				is_pipe_end = true;
 			}
 
 			args = cmd_input_parse(cmds[i]);
