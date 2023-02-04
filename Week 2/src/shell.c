@@ -1,3 +1,5 @@
+#include <glob.h>
+#include <signal.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -6,10 +8,33 @@
 #include <sys/wait.h>
 #include <unistd.h>
 
+#define MAX_CMDS (1 << 6)
 #define MAX_ARGS (1 << 6)
 
 char *infile, *outfile;
-bool bg;
+bool bg, is_pipe_begin, is_pipe_end;
+pid_t pid = -1;
+
+int old_pipefd[2] = {STDIN_FILENO}, new_pipefd[2];
+
+void handle_sigint(int sig)
+{
+	if (pid > 0)
+	{
+		kill(pid, SIGINT);
+	}
+	else
+	{
+		printf("\n\n> ");
+		fflush(stdout);
+	}
+}
+
+// void handle_sigtstp(int sig)
+// {
+// 	bg = true;
+// 	pid = -1;
+// }
 
 char *shell_read_line()
 {
@@ -32,7 +57,27 @@ char *shell_read_line()
 	return line;
 }
 
-char **shell_input_parse(char *line)
+char **get_cmds(char *line)
+{
+	char **cmds = malloc(MAX_CMDS * sizeof(char *));
+	char *cmd;
+	int position = 0;
+
+	cmd = strtok(line, "|");
+
+	while (cmd != NULL)
+	{
+		cmds[position] = cmd;
+		position++;
+
+		cmd = strtok(NULL, "|");
+	}
+	cmds[position] = NULL;
+
+	return cmds;
+}
+
+char **cmd_input_parse(char *line)
 {
 	char **args = malloc(MAX_ARGS * sizeof(char *));
 	char *arg;
@@ -45,7 +90,6 @@ char **shell_input_parse(char *line)
 	while (arg != NULL &&
 		   strcmp(arg, "<") != 0 &&
 		   strcmp(arg, ">") != 0 &&
-		   strcmp(arg, "|") != 0 &&
 		   strcmp(arg, "&") != 0)
 	{
 		if (*arg == '\'' || *arg == '\"')
@@ -78,17 +122,12 @@ char **shell_input_parse(char *line)
 	{
 		if (strcmp(arg, "<") == 0)
 		{
-			infile = strtok(NULL, " \t\n\r");
+			infile = strtok(NULL, " \t\r\n");
 		}
 		else if (strcmp(arg, ">") == 0)
 		{
-			outfile = strtok(NULL, " \t\n\r");
+			outfile = strtok(NULL, " \t\r\n");
 		}
-		// else if (strcmp(arg, "|") == 0)
-		// {
-		// 	cmd = args[0];
-		// 	cmdargs = args;
-		// }
 		else if (strcmp(arg, "&") == 0)
 		{
 			bg = true;
@@ -98,6 +137,37 @@ char **shell_input_parse(char *line)
 	}
 
 	return args;
+}
+
+char **expand_args(char **args)
+{
+	glob_t globbuf;
+	char **newargs = malloc(MAX_ARGS * sizeof(char *));
+	int i = 1, j = 1;
+	newargs[0] = strdup(args[0]);
+
+	while (args[i] != NULL)
+	{
+		if (glob(args[i], GLOB_MARK | GLOB_TILDE | GLOB_BRACE, NULL, &globbuf) == 0)
+		{
+			for (int k = 0; k < globbuf.gl_pathc; k++)
+			{
+				newargs[j] = strdup(globbuf.gl_pathv[k]);
+				j++;
+			}
+			globfree(&globbuf);
+		}
+		else
+		{
+			newargs[j] = strdup(args[i]);
+			j++;
+		}
+		i++;
+	}
+	newargs[j] = NULL;
+	free(args);
+
+	return newargs;
 }
 
 int shell_execute(char **args)
@@ -127,22 +197,55 @@ int shell_execute(char **args)
 		return 1;
 	}
 
-	pid_t pid;
+	pid = -1;
 	int status;
+
+	// if (!is_pipe_end && pipe(new_pipefd) == -1)
+	// {
+	// 	perror("pipe");
+	// 	exit(EXIT_FAILURE);
+	// }
 
 	pid = fork();
 	if (pid == 0)
 	{
 		if (infile != NULL)
 		{
-			freopen(infile, "r", stdin);
+			if (freopen(infile, "r", stdin) == NULL)
+			{
+				perror("shell");
+				exit(EXIT_FAILURE);
+			}
 		}
 		if (outfile != NULL)
 		{
 			freopen(outfile, "w", stdout);
 		}
 
-		if (execvp(args[0], args) == -1)
+		// if (!is_pipe_begin)
+		// {
+		// 	close(old_pipefd[1]);
+		// 	if (dup2(old_pipefd[0], STDIN_FILENO) == -1)
+		// 	{
+		// 		perror("dup2");
+		// 		exit(EXIT_FAILURE);
+		// 	}
+		// }
+
+		// if (!is_pipe_end)
+		// {
+		// 	close(new_pipefd[0]);
+		// 	if (dup2(new_pipefd[1], STDOUT_FILENO) == -1)
+		// 	{
+		// 		perror("dup2");
+		// 		exit(EXIT_FAILURE);
+		// 	}
+		// }
+
+		if (execvp((strcmp(args[0], "cls") == 0
+						? "clear"
+						: args[0]),
+				   args) == -1)
 		{
 			perror("shell");
 		}
@@ -154,6 +257,19 @@ int shell_execute(char **args)
 	}
 	else
 	{
+		// if (!is_pipe_begin)
+		// {
+		// 	close(old_pipefd[0]);
+		// }
+
+		// old_pipefd[0] = new_pipefd[0];
+		// old_pipefd[1] = new_pipefd[1];
+
+		// if (!is_pipe_end)
+		// {
+		// 	close(new_pipefd[1]);
+		// }
+
 		do
 		{
 			if (bg)
@@ -168,22 +284,55 @@ int shell_execute(char **args)
 int main()
 {
 	char *line;
-	char **args;
-	int status;
+	char **cmds, **args;
+	int status = 1;
+
+	signal(SIGINT, handle_sigint);
+	// signal(SIGTSTP, handle_sigtstp);
 
 	do
 	{
-		printf("> ");
+		printf("\n> ");
 		line = shell_read_line();
-		if (line == NULL || *line == '\0')
+		if (*line == '\n')
 		{
-			break;
+			free(line);
+			continue;
 		}
-		args = shell_input_parse(line);
-		status = shell_execute(args);
+
+		cmds = get_cmds(line);
+
+		is_pipe_begin = true;
+		is_pipe_end = false;
+		for (int i = 0; cmds[i] != NULL && status; i++)
+		{
+			if (cmds[i + 1] == NULL)
+			{
+				is_pipe_end = false;
+			}
+
+			args = cmd_input_parse(cmds[i]);
+
+			if (args != NULL)
+			{
+				args = expand_args(args);
+				status = shell_execute(args);
+
+				for (int i = 0; args[i] != NULL; i++)
+				{
+					free(args[i]);
+				}
+				free(args);
+			}
+
+			if (i == 0)
+			{
+				is_pipe_begin = false;
+			}
+		}
 
 		free(line);
-		free(args);
+		free(cmds);
 	} while (status);
 
 	return EXIT_SUCCESS;
