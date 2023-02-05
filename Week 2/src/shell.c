@@ -97,20 +97,24 @@ char **cmd_input_parse(char *line)
 	{
 		if (*arg == '\'' || *arg == '\"')
 		{
-			char *temp = strtok(NULL, " \t\n\r");
-			while (temp != NULL)
+			if (arg[strlen(arg) - 1] != *arg)
 			{
-				*(temp - 1) = ' ';
-
-				if (temp[strlen(temp) - 1] == *arg)
+				char *temp = strtok(NULL, " \t\n\r");
+				while (temp != NULL)
 				{
-					break;
-				}
+					*(temp - 1) = ' ';
 
-				temp = strtok(NULL, " \t\n\r");
+					if (temp[strlen(temp) - 1] == *arg)
+					{
+						break;
+					}
+
+					temp = strtok(NULL, " \t\n\r");
+				}
 			}
 
-			*strchr(arg + 1, *arg) = '\0';
+			// *strchr(arg + 1, *arg) = '\0';
+			arg[strlen(arg) - 1] = 0;
 			arg++;
 		}
 
