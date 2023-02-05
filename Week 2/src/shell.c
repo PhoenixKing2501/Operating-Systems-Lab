@@ -22,7 +22,7 @@ void handle_sigint(int sig)
 	if (pid > 0)
 	{
 		kill(pid, SIGINT);
-		pid = -1;
+		pid = -2;
 	}
 	else
 	{
@@ -284,9 +284,13 @@ int shell_execute(char **args)
 			waitpid(pid, &status, WUNTRACED);
 		} while (!WIFEXITED(status) && !WIFSIGNALED(status));
 
-		if (WIFEXITED(status) || WIFSIGNALED(status))
+		if (WIFEXITED(status))
 		{
 			pid = -1;
+		}
+		else if (WIFSIGNALED(status))
+		{
+			pid = -2;
 		}
 	}
 
@@ -316,7 +320,8 @@ int main()
 
 		is_pipe_begin = true;
 		is_pipe_end = false;
-		for (int i = 0; cmds[i] != NULL && status; i++)
+		pid = -1;
+		for (int i = 0; cmds[i] != NULL && status && pid != -2; i++)
 		{
 			if (cmds[i + 1] == NULL)
 			{
