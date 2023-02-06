@@ -1,0 +1,25 @@
+sb 33
+sb c 
+sb --suggest 31
+sb 21 --suggest
+sb 0
+sb 0s as
+sb 33 > out.txt
+sb 33>out.txt
+sb 33|cat
+sb 33 --suggest
+sb 33      --suggest
+sb <great_grand_children_id> --suggest
+sb <great_great_grand_children_id> --suggest
+
+//for history checking
+two up arrows
+two up arrows reach cd and then type directory name
+handle ctrl+c
+two down arrows
+1000 up arrows followed by 1001 down arrows
+handle ctrl+z
+1010 up arrows followed by one down arrow
+5 down arrows from current command to one up arrow
+
+
