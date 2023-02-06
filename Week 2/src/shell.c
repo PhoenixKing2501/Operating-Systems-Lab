@@ -1,3 +1,4 @@
+#include <ctype.h>
 #include <glob.h>
 #include <signal.h>
 #include <stdbool.h>
@@ -7,6 +8,8 @@
 #include <string.h>
 #include <sys/wait.h>
 #include <unistd.h>
+
+#include <readline/readline.h>
 
 #define MAX_CMDS (1 << 6)
 #define MAX_ARGS (1 << 6)
@@ -38,23 +41,38 @@ void handle_sigint(int sig)
 // 	pid = -1;
 // }
 
+void init_readline()
+{
+	rl_bind_keyseq("\\C-p", rl_get_previous_history);
+	rl_bind_keyseq("\\C-n", rl_get_next_history);
+}
+
 char *shell_read_line()
 {
 	char *line = NULL;
-	size_t bufsize = 0;
+	// size_t bufsize = 0;
 
-	if (getline(&line, &bufsize, stdin) == -1)
+	// if (getline(&line, &bufsize, stdin) == -1)
+	// {
+	// 	if (feof(stdin))
+	// 	{
+	// 		puts("exit");
+	// 		exit(EXIT_SUCCESS);
+	// 	}
+	// 	else
+	// 	{
+	// 		perror("shell: getline");
+	// 		exit(EXIT_FAILURE);
+	// 	}
+	// }
+
+	fflush(stdin);
+	line = readline("\n> ");
+
+	if (line == NULL)
 	{
-		if (feof(stdin))
-		{
-			puts("exit");
-			exit(EXIT_SUCCESS);
-		}
-		else
-		{
-			perror("shell: getline");
-			exit(EXIT_FAILURE);
-		}
+		puts("exit");
+		exit(EXIT_SUCCESS);
 	}
 
 	return line;
@@ -210,7 +228,7 @@ int shell_execute(char **args)
 	if (!is_pipe_end && pipe(new_pipefd) == -1)
 	{
 		perror("pipe");
-		exit(EXIT_FAILURE);
+		return 0;
 	}
 
 	pid = fork();
@@ -221,7 +239,7 @@ int shell_execute(char **args)
 			if (freopen(infile, "r", stdin) == NULL)
 			{
 				perror("shell");
-				exit(EXIT_FAILURE);
+				return 0;
 			}
 		}
 		if (outfile != NULL)
@@ -235,7 +253,7 @@ int shell_execute(char **args)
 			if (dup2(old_pipefd[0], STDIN_FILENO) == -1)
 			{
 				perror("dup2");
-				exit(EXIT_FAILURE);
+				return 0;
 			}
 		}
 
@@ -245,7 +263,7 @@ int shell_execute(char **args)
 			if (dup2(new_pipefd[1], STDOUT_FILENO) == -1)
 			{
 				perror("dup2");
-				exit(EXIT_FAILURE);
+				return 0;
 			}
 		}
 
@@ -256,7 +274,7 @@ int shell_execute(char **args)
 		{
 			perror("shell");
 		}
-		exit(EXIT_FAILURE);
+		return 0;
 	}
 	else if (pid < 0)
 	{
@@ -299,24 +317,37 @@ int shell_execute(char **args)
 
 int main()
 {
-	char *line;
+	char *line, *beg;
 	char **cmds, **args;
 	int status = 1;
 
 	signal(SIGINT, handle_sigint);
 	// signal(SIGTSTP, handle_sigtstp);
 
+	// init_readline();
+
 	do
 	{
-		printf("\n> ");
 		line = shell_read_line();
-		if (*line == '\n')
+		beg = line;
+
+		while (isspace(*beg))
 		{
-			free(line);
+			beg++;
+			if (*beg == '\n')
+			{
+				free(line);
+				line = NULL;
+				break;
+			}
+		}
+
+		if (line == NULL)
+		{
 			continue;
 		}
 
-		cmds = get_cmds(line);
+		cmds = get_cmds(beg);
 
 		is_pipe_begin = true;
 		is_pipe_end = false;
