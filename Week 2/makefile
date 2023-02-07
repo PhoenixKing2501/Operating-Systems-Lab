@@ -1,4 +1,7 @@
-A2:shell sb virus history test
+A2:shell sb virus history test hist
+
+hist:hist.c
+	gcc -o hist hist.c -lreadline
 
 history:history.c
 	gcc -o history history.c -lncurses
@@ -13,7 +16,7 @@ virus:virus.c
 	gcc -o virus virus.c
 
 test:test.c
-	gcc -o test test.c -lncurses
+	gcc -o test test.c -lreadline
 
 clean:
-	rm -f shell sb virus gpt test history
+	rm -f shell sb virus gpt test history hist

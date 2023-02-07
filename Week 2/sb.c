@@ -92,7 +92,7 @@ int get_parent(pid_t pid)
             }
             fclose(fp);
         }
-        double val = (1.0 + log(child_count+1)) / (1 + log(non_sleep_time + 1)); //+1 to consider case when utime+stime = 0
+        double val = (1.0 + log(child_count + 1)) / (1 + log(non_sleep_time + 1)); //+1 to consider case when utime+stime = 0
         if (val > maxval)
         {
 
@@ -156,6 +156,10 @@ int main(int argc, char *argv[])
             fprintf(stderr, "Incorrect flag specified with bash command \"sb\"\n");
             return 1;
         }
+    }
+    if (ret == 0)
+    {
+        fprintf(stderr, "The process id is not in correct format\n");
     }
     print_ancestors(pid); // print ancestors of process
 
