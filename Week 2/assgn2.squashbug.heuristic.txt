@@ -1,5 +1,4 @@
 					                            SQUASH BUG
-                                            ==================
 
 Name:
     sb - list the ancestors of a process and detect suspected malware process among it(based on option)
