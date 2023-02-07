@@ -1,0 +1,36 @@
+					                            SQUASH BUG
+                                            ==================
+
+Name:
+    sb - list the ancestors of a process and detect suspected malware process among it(based on option)
+
+Synopsis:
+    sb [options] <pid>
+
+Description:
+    The command is used for printing the ancestors of a process with 
+    given pid until the init process(pid 1).It can also suggest process suspected to be malware among the list of ancestors.
+
+Options:
+    --suggest
+        Suggest a malware process among the ancestors of process <pid>.
+
+Implementation and Reasoning:
+    Finding ancestors of a process:
+        Given a process <pid>, the <ppid> (parent process id) of the process was obtained from the “PPid:” field of the file “/proc/<pid>/status”
+        (absolute path specified) and was printed along with the name of the process on the shell. This was repeated again for the parent continuing until the init process(pid 1) or kthread process(pid 2) was reached(both have parent pid as 0).
+
+    Heuristic to find malware:
+        The proposed method is based on the idea that the root malware keeps spawning new processes at regular intervals. Therefore child count of the root malware is continuously increasing. However, the child count can also be high for processes such as the init process and other important processes. Therefore child count divided by non-sleep time(active time)of the process would be able to identify the root malware since the root malware keeps spawning at regular intervals. The active time of another process such as init will be way higher than this malware process.
+        Finally, the formula on which the root malware was detected is
+        (1.0 + log(child_count + 1)) / (1 + log(non_sleep_time + 1))
+        The process which has the max value of this is printed as the suspected
+        process.Log base 10 has been taken on both the numerator and denominator to dampen the effect of non_sleep_time and child_count. (Also 1 has been added to deal with the case when the quantities are zero, similarly, 1 has been added to the log values to deal with the case when the log value is 0.)
+
+    Implementation of the --suggest option:
+        The child count of the process was obtained by reading the number of space-separated numbers(which correspond to children's PIDs of the process)from the file “/proc/<pid>/task/<pid>/children”.
+        The non-sleep time of a process is calculated by the sum of utime+stime from the file “/proc/<pid>/stat”.
+        Utime: Amount of time that this process has been scheduled in user mode, measured in clock ticks (divide by sysconf(_SC_CLK_TCK)).
+        Stime: Amount of time that this process has been scheduled in kernel mode, measured in clock ticks (divide by sysconf(_SC_CLK_TCK)).
+
+(Reference: GNU manual for proc, https://man7.org/linux/man-pages/man5/proc.5.html)
