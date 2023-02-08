@@ -15,50 +15,91 @@
 
 #define MAX_CMDS (1 << 6)
 #define MAX_ARGS (1 << 6)
+#define MAX_BGPS (1 << 8)
 
 char *infile, *outfile;
 bool bg, is_pipe_begin, is_pipe_end;
 pid_t pid = -1;
 int old_pipefd[2] = {STDIN_FILENO}, new_pipefd[2];
-int pid_index = 0;
-pid_t pids[MAX_CMDS];
+int pid_index = 0, bg_index = 0;
+pid_t pids[MAX_CMDS], bg_pids[MAX_BGPS];
 
 void handle_sigint(int sig)
 {
 	if (pid < 0)
 	{
 		rl_delete_text(0, rl_end);
-		printf("\n\n> ");
-		rl_redisplay();
+		printf("\n");
+		rl_forced_update_display();
 	}
 }
 
 void handle_sigtstp(int sig)
 {
 	bg = true;
-	if (pid > 0)
+	if (pid_index > 0)
 	{
-		kill(pid, SIGCONT);
+		for (int i = 0; i < pid_index; ++i)
+		{
+			bg_pids[bg_index++] = pids[i];
+		}
 	}
-	pid = -1;
+
+	for (int i = 0; i < bg_index; ++i)
+	{
+		kill(bg_pids[i], SIGCONT);
+	}
+}
+
+int ctrl_a_handler(int count, int key)
+{
+	rl_point = 0;
+	return 0;
+}
+
+int ctrl_e_handler(int count, int key)
+{
+	rl_point = rl_end;
+	return 0;
+}
+
+int left_key_handler(int count, int key)
+{
+	if (rl_point > 0)
+	{
+		rl_point--;
+	}
+	return 0;
+}
+
+int right_key_handler(int count, int key)
+{
+	if (rl_point < rl_end)
+	{
+		rl_point++;
+	}
+	return 0;
 }
 
 void init_readline()
 {
 	rl_bind_keyseq("\\e[A", up_key_handler);
 	rl_bind_keyseq("\\e[B", down_key_handler);
+	rl_bind_keyseq("\\e[C", right_key_handler);
+	rl_bind_keyseq("\\e[D", left_key_handler);
+	rl_bind_keyseq("\\C-a", ctrl_a_handler);
+	rl_bind_keyseq("\\C-e", ctrl_e_handler);
 }
 
 char *shell_read_line()
 {
-	char *line = NULL;
-
-	fflush(stdin);
-	line = readline("\n> ");
+	refresh_history();
+	char *line = readline("\n> ");
 
 	if (line == NULL)
 	{
 		puts("exit");
+		history_save();
 		exit(EXIT_SUCCESS);
 	}
 
@@ -117,7 +158,6 @@ char **cmd_input_parse(char *line)
 				}
 			}
 
-			// *strchr(arg + 1, *arg) = '\0';
 			arg[strlen(arg) - 1] = 0;
 			arg++;
 		}
@@ -181,24 +221,38 @@ char **expand_args(char **args)
 	return newargs;
 }
 
-void child_wait(pid_t pid)
+void child_wait(pid_t _pid)
 {
 	int status;
+	pid_t ret;
 
 	do
 	{
 		if (bg)
 			break;
-		waitpid(pid, &status, WUNTRACED);
-	} while (!WIFEXITED(status) && !WIFSIGNALED(status));
 
-	if (WIFEXITED(status))
+		ret = waitpid(_pid, &status, WNOHANG | WUNTRACED);
+
+		if (ret == -1)
+		{
+			perror("waitpid");
+			exit(EXIT_FAILURE);
+		}
+
+	} while (ret == 0 ||
+			 (!WIFEXITED(status) &&
+			  !WIFSIGNALED(status)));
+
+	if (!bg)
 	{
-		pid = -1;
-	}
-	else if (WIFSIGNALED(status))
-	{
-		pid = -2;
+		if (WIFEXITED(status))
+		{
+			pid = -1;
+		}
+		else if (WIFSIGNALED(status))
+		{
+			pid = -2;
+		}
 	}
 }
 
@@ -211,6 +265,7 @@ int shell_execute(char **args)
 
 	if (strcmp(args[0], "exit") == 0)
 	{
+		history_save();
 		return 0;
 	}
 	else if (strcmp(args[0], "cd") == 0)
@@ -233,6 +288,15 @@ int shell_execute(char **args)
 		history_print();
 		return 1;
 	}
+	else if (strcmp(args[0], "wait") == 0)
+	{
+		for (int i = 0; i < bg_index; ++i)
+		{
+			waitpid(bg_pids[i], NULL, 0);
+		}
+		bg_index = 0;
+		return 1;
+	}
 
 	pid = -1;
 
@@ -245,23 +309,12 @@ int shell_execute(char **args)
 	pid = fork();
 	if (pid == 0)
 	{
-		// struct sigaction sa;
-		// sa.sa_handler = handle_sigtstp_child;
-		// sigemptyset(&sa.sa_mask);
-		// sa.sa_flags = 0;
-
-		// if (sigaction(SIGTSTP, &sa, NULL) == -1)
-		// {
-		// 	perror("sigaction");
-		// 	return 0;
-		// }
-
 		if (infile != NULL)
 		{
 			if (freopen(infile, "r", stdin) == NULL)
 			{
 				perror("shell");
-				return 0;
+				exit(EXIT_FAILURE);
 			}
 		}
 		if (outfile != NULL)
@@ -269,7 +322,7 @@ int shell_execute(char **args)
 			if (freopen(outfile, "w", stdout) == NULL)
 			{
 				perror("shell");
-				return 0;
+				exit(EXIT_FAILURE);
 			}
 		}
 
@@ -279,7 +332,7 @@ int shell_execute(char **args)
 			if (dup2(old_pipefd[0], STDIN_FILENO) == -1)
 			{
 				perror("dup2");
-				return 0;
+				exit(EXIT_FAILURE);
 			}
 		}
 
@@ -289,18 +342,20 @@ int shell_execute(char **args)
 			if (dup2(new_pipefd[1], STDOUT_FILENO) == -1)
 			{
 				perror("dup2");
-				return 0;
+				exit(EXIT_FAILURE);
 			}
 		}
 
-		if (execvp((strcmp(args[0], "cls") == 0
-						? "clear"
-						: args[0]),
-				   args) == -1)
+		char *cmd = strcmp(args[0], "cls") == 0		? "clear"
+					: strcmp(args[0], "sb") == 0	? "./sb"
+					: strcmp(args[0], "delep") == 0 ? "./delep"
+													: args[0];
+
+		if (execvp(cmd, args) == -1)
 		{
 			perror("shell");
 		}
-		return 0;
+		exit(EXIT_FAILURE);
 	}
 	else if (pid < 0)
 	{
@@ -322,24 +377,6 @@ int shell_execute(char **args)
 		{
 			close(new_pipefd[1]);
 		}
-
-		// int status;
-
-		// do
-		// {
-		// 	if (bg)
-		// 		break;
-		// 	waitpid(pid, &status, WUNTRACED);
-		// } while (!WIFEXITED(status) && !WIFSIGNALED(status));
-
-		// if (WIFEXITED(status))
-		// {
-		// 	pid = -1;
-		// }
-		// else if (WIFSIGNALED(status))
-		// {
-		// 	pid = -2;
-		// }
 	}
 
 	return 1;
@@ -372,7 +409,7 @@ int main()
 
 		while (isspace(*beg))
 		{
-			beg++;
+			++beg;
 			if (*beg == '\n')
 			{
 				free(line);
@@ -381,18 +418,15 @@ int main()
 			}
 		}
 
-		if (line == NULL)
+		if (line == NULL || *line == 0)
 		{
 			continue;
 		}
 
-		history_add(line);
+		history_add(beg);
 		cmds = get_cmds(beg);
 
-		for (int i = 0;
-			 cmds[i] != NULL &&
-			 status && pid != -2;
-			 ++i)
+		for (int i = 0; cmds[i] != NULL && status; ++i)
 		{
 			if (cmds[i + 1] == NULL)
 			{
