@@ -23,10 +23,10 @@ typedef struct
 
 void init_history();
 void history_add(char *cmd);
+void history_save();
+void refresh_history();
 void history_print();
 int up_key_handler(int count, int key);
 int down_key_handler(int count, int key);
-
-extern history_t H;
 
 #endif // _HISTORY_H_
