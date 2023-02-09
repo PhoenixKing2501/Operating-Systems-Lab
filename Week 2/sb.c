@@ -92,7 +92,7 @@ int get_parent(pid_t pid)
             }
             fclose(fp);
         }
-        double val = (1.0 + log(child_count + 1)) / (1 + log(non_sleep_time + 1)); //+1 to consider case when utime+stime = 0
+        double val = (child_count + 1) / (1 + log(non_sleep_time + 1)); //+1 to consider case when utime+stime = 0
         if (val > maxval)
         {
 
@@ -118,7 +118,8 @@ void print_ancestors(pid_t pid)
     }
 }
 
-int main(int argc, char *argv[])
+/*function to parse the arguments*/
+int squashbug(char *argv[])
 {
     if (argv[1] == NULL)
     {

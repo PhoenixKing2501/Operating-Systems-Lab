@@ -8,11 +8,10 @@
 #include <stdio.h>
 #include <unistd.h>
 #include <stdlib.h>
-#include <sys/wait.h>
 
 #define CHILD_PROCESSES 5
 #define GRANDCHILDREN_PROCESSES 10
-#define SLEEP_DURATION 20
+#define SLEEP_DURATION 120
 
 int main()
 {
