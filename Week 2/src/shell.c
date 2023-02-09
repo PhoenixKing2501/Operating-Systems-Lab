@@ -11,6 +11,7 @@
 
 #include <readline/readline.h>
 
+#include "delep.h"
 #include "history.h"
 
 #define MAX_CMDS (1 << 6)
@@ -297,6 +298,86 @@ int shell_execute(char **args)
 		bg_index = 0;
 		return 1;
 	}
+	else if (strcmp(args[0], "sb") == 0)
+	{
+	}
+	else if (strcmp(args[0], "delep") == 0)
+	{
+		int delep_pipefd[2];
+		if (pipe(delep_pipefd) == -1)
+		{
+			perror("pipe");
+			return 0;
+		}
+
+		pid_t delep_pid = fork();
+
+		if (delep_pid == 0)
+		{
+			close(delep_pipefd[0]);
+			int ret = delep_list_files(args[1], delep_pipefd[1]);
+			close(delep_pipefd[1]);
+			exit(ret);
+		}
+		else if (delep_pid < 0)
+		{
+			perror("shell");
+		}
+		else
+		{
+			close(delep_pipefd[1]);
+
+			int unique_procs_to_kill = 0;
+			int delep_status;
+			pid_t procs_to_kill[MAX_PROCS_TO_KILL];
+
+			read(delep_pipefd[0], &unique_procs_to_kill, sizeof(int));
+			read(delep_pipefd[0], procs_to_kill, unique_procs_to_kill * sizeof(pid_t));
+
+			close(delep_pipefd[0]);
+			waitpid(delep_pid, &delep_status, 0);
+			
+			printf("Parent: %d\n", unique_procs_to_kill);
+
+			if (delep_status == -1)
+			{
+				return 0;
+			}
+
+			puts("Process IDs having file open:");
+			for (int i = 0; i < unique_procs_to_kill; ++i)
+			{
+				printf("%d\n", abs(procs_to_kill[i]));
+			}
+
+			puts("Process IDs having file locked:");
+			for (int i = 0; i < unique_procs_to_kill; ++i)
+			{
+				if (procs_to_kill[i] < 0)
+				{
+					printf("%d\n", -procs_to_kill[i]);
+				}
+			}
+
+			if (unique_procs_to_kill > 0)
+			{
+				char *answer = NULL;
+				size_t answer_size = 0;
+				printf("Kill processes? [y/n] ");
+				getline(&answer, &answer_size, stdin);
+				if (tolower(answer[0]) == 'y')
+				{
+					for (int i = 0; i < unique_procs_to_kill; ++i)
+					{
+						kill(abs(procs_to_kill[i]), SIGKILL);
+					}
+				}
+				free(answer);
+			}
+
+			return 1;
+		}
+	}
 
 	pid = -1;
 
@@ -346,10 +427,9 @@ int shell_execute(char **args)
 			}
 		}
 
-		char *cmd = strcmp(args[0], "cls") == 0		? "clear"
-					: strcmp(args[0], "sb") == 0	? "./sb"
-					: strcmp(args[0], "delep") == 0 ? "./delep"
-													: args[0];
+		char *cmd = strcmp(args[0], "cls") == 0
+						? "clear"
+						: args[0];
 
 		if (execvp(cmd, args) == -1)
 		{
