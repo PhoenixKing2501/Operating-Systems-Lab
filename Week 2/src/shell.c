@@ -13,6 +13,7 @@
 
 #include "delep.h"
 #include "history.h"
+#include "sb.h"
 
 // Max number of commands in a single line
 #define MAX_CMDS (1 << 6)
@@ -318,9 +319,33 @@ int shell_execute(char **args)
 	}
 	else if (strcmp(args[0], "sb") == 0)
 	{
+		pid_t sb_pid = fork();
+
+		if (sb_pid == 0)
+		{
+			int ret = squashbug(args);
+			exit(ret);
+		}
+		else if (sb_pid < 0)
+		{
+			perror("shell");
+		}
+		else
+		{
+			int sb_status;
+			waitpid(sb_pid, &sb_status, 0);
+
+			return sb_status == 0;
+		}
 	}
 	else if (strcmp(args[0], "delep") == 0)
 	{
+		if (args[1] == NULL)
+		{
+			fprintf(stderr, "shell: expected argument to \"delep\"\n");
+			return 1;
+		}
+
 		int delep_pipefd[2];
 		if (pipe(delep_pipefd) == -1)
 		{
@@ -483,7 +508,7 @@ int main()
 {
 	char *line, *beg;
 	char **cmds, **args;
-	int status = 1;
+	bool status;
 
 	signal(SIGINT, handle_sigint);
 	signal(SIGTSTP, handle_sigtstp);
@@ -497,6 +522,7 @@ int main()
 		is_pipe_begin = true;
 		is_pipe_end = false;
 		pid = -1;
+		status = true;
 		pid_index = 0;
 
 		memset(pids, 0, sizeof(pids));
@@ -557,7 +583,7 @@ int main()
 
 		free(line);
 		free(cmds);
-	} while (status);
+	} while (true);
 
 	return EXIT_SUCCESS;
 }

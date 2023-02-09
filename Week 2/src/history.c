@@ -15,22 +15,34 @@
 
 history_t H;
 
+char *get_history_file() // returns the path of history file
+{
+	char *home = getenv("HOME");
+	char *path = malloc(strlen(home) + strlen("/history.txt") + 1);
+	strcpy(path, home);
+	strcat(path, "/history.txt");
+	return path;
+}
+
 void init_history() // opens "history.txt" and loads into history buffer (to be called just after the shell starts)
 {
 	H.h_st = 0;
 
-	FILE *fptr = fopen("history.txt", "r");
+	char *path = get_history_file();
+
+	FILE *fptr = fopen(path, "r");
 	if (fptr == NULL)
 	{
-		fptr = fopen("history.txt", "w");
+		fptr = fopen(path, "w");
 		if (fptr == NULL)
 		{
 			printf("Error in opening history\n");
 			exit(EXIT_FAILURE);
 		}
 		fclose(fptr);
-		fptr = fopen("history.txt", "r");
+		fptr = fopen(path, "r");
 	} // creates an empty "history.txt" if file not found
+	free(path);
 
 	H.h_end = 0;
 	size_t cmdsize = 0;
@@ -80,12 +92,14 @@ void history_add(char *cmd) // adds command to be executed to the history buffer
 
 void history_save() // saves the "history.txt" (to be called just before the shell is closed)
 {
-	FILE *fptr = fopen("history.txt", "w");
+	char *path = get_history_file();
+	FILE *fptr = fopen(path, "w");
 	if (fptr == NULL)
 	{
 		printf("Error in opening history\n");
 		exit(EXIT_FAILURE);
 	}
+	free(path);
 
 	// write back the contents of history buffer
 	for (int i = H.h_st; i != H.h_end; i = (i + 1) % (HISTORY_SIZE + 1))
