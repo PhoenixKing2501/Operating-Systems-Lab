@@ -46,7 +46,7 @@ void get_process_info(pid_t pid) {
     }
     token = strtok(NULL, " ");
     count++;
-  }
+  } 
 
   printf("pid: %d, name: %s, state: %s\n", pid, process_name, process_state);
 }
