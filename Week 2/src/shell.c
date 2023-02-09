@@ -355,8 +355,6 @@ int shell_execute(char **args)
 			close(delep_pipefd[0]);
 			waitpid(delep_pid, &delep_status, 0);
 
-			printf("Parent: %d\n", unique_procs_to_kill);
-
 			if (delep_status == -1)
 			{
 				return 0;

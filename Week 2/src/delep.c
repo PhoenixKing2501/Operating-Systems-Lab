@@ -156,7 +156,6 @@ int delep_list_files(char *arg, int delep_pipefd)
 	}
 	closedir(proc_dir);
 
-	printf("Child: %d\n", unique_procs_to_kill);
 	if (write(delep_pipefd, &unique_procs_to_kill, sizeof(unique_procs_to_kill)) < 0)
 	{
 		return -1;
