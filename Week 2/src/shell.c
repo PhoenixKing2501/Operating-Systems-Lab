@@ -14,10 +14,14 @@
 #include "delep.h"
 #include "history.h"
 
+// Max number of commands in a single line
 #define MAX_CMDS (1 << 6)
+// Max number of arguments in a single command
 #define MAX_ARGS (1 << 6)
+// Max number of background processes
 #define MAX_BGPS (1 << 8)
 
+// Global variables
 char *infile, *outfile;
 bool bg, is_pipe_begin, is_pipe_end;
 pid_t pid = -1;
@@ -25,6 +29,7 @@ int old_pipefd[2] = {STDIN_FILENO}, new_pipefd[2];
 int pid_index = 0, bg_index = 0;
 pid_t pids[MAX_CMDS], bg_pids[MAX_BGPS];
 
+// Function to handle SIGINT
 void handle_sigint(int sig)
 {
 	if (pid < 0)
@@ -35,6 +40,7 @@ void handle_sigint(int sig)
 	}
 }
 
+// Function to handle SIGTSTP
 void handle_sigtstp(int sig)
 {
 	bg = true;
@@ -52,18 +58,21 @@ void handle_sigtstp(int sig)
 	}
 }
 
+// Function to handle Ctrl+A
 int ctrl_a_handler(int count, int key)
 {
 	rl_point = 0;
 	return 0;
 }
 
+// Function to handle Ctrl+E
 int ctrl_e_handler(int count, int key)
 {
 	rl_point = rl_end;
 	return 0;
 }
 
+// Function to handle left arrow key
 int left_key_handler(int count, int key)
 {
 	if (rl_point > 0)
@@ -73,6 +82,7 @@ int left_key_handler(int count, int key)
 	return 0;
 }
 
+// Function to handle right arrow key
 int right_key_handler(int count, int key)
 {
 	if (rl_point < rl_end)
@@ -82,6 +92,7 @@ int right_key_handler(int count, int key)
 	return 0;
 }
 
+// Function to init realine handlers
 void init_readline()
 {
 	rl_bind_keyseq("\\e[A", up_key_handler);
@@ -92,6 +103,7 @@ void init_readline()
 	rl_bind_keyseq("\\C-e", ctrl_e_handler);
 }
 
+// Function to read input from user
 char *shell_read_line()
 {
 	refresh_history();
@@ -107,6 +119,7 @@ char *shell_read_line()
 	return line;
 }
 
+// Function to parse input
 char **get_cmds(char *line)
 {
 	char **cmds = malloc(MAX_CMDS * sizeof(char *));
@@ -127,6 +140,7 @@ char **get_cmds(char *line)
 	return cmds;
 }
 
+// Function to parse command
 char **cmd_input_parse(char *line)
 {
 	char **args = malloc(MAX_ARGS * sizeof(char *));
@@ -191,6 +205,7 @@ char **cmd_input_parse(char *line)
 	return args;
 }
 
+// Function to expand wildcards
 char **expand_args(char **args)
 {
 	glob_t globbuf;
@@ -222,6 +237,7 @@ char **expand_args(char **args)
 	return newargs;
 }
 
+// Function to wait for child process
 void child_wait(pid_t _pid)
 {
 	int status;
@@ -257,6 +273,7 @@ void child_wait(pid_t _pid)
 	}
 }
 
+// Function to execute command
 int shell_execute(char **args)
 {
 	if (args[0] == NULL)
@@ -294,6 +311,7 @@ int shell_execute(char **args)
 		for (int i = 0; i < bg_index; ++i)
 		{
 			waitpid(bg_pids[i], NULL, 0);
+			printf("Process %d exited\n", bg_pids[i]);
 		}
 		bg_index = 0;
 		return 1;
@@ -336,7 +354,7 @@ int shell_execute(char **args)
 
 			close(delep_pipefd[0]);
 			waitpid(delep_pid, &delep_status, 0);
-			
+
 			printf("Parent: %d\n", unique_procs_to_kill);
 
 			if (delep_status == -1)
@@ -381,7 +399,8 @@ int shell_execute(char **args)
 
 	pid = -1;
 
-	if (!is_pipe_end && pipe(new_pipefd) == -1)
+	if (!is_pipe_end &&
+		pipe(new_pipefd) == -1)
 	{
 		perror("pipe");
 		return 0;
