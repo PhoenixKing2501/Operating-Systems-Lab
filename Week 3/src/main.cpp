@@ -1,15 +1,22 @@
 #include <bits/stdc++.h>
-
 #include <sys/wait.h>
 
-#include "My_Allocator.hpp"
+#include "Graph.hpp"
 using namespace std;
 
 int main()
 {
-	vector<vector<int32_t, My_Allocator<int32_t>>,
-		   My_Allocator<vector<int32_t, My_Allocator<int32_t>>>>
-		graph(VEC_LEN, vector<int32_t, My_Allocator<int32_t>>(VEC_LEN));
+	// Create shared memory
+	key_t shmkey = ftok("input/facebook_combined.txt", 1);
+
+	if (shmkey == -1)
+	{
+		perror("ftok");
+		return EXIT_FAILURE;
+	}
+
+	Graph<bool> graph(shmkey);
+	graph.init(false);
 
 	puts("Reading file...");
 
@@ -20,10 +27,10 @@ int main()
 		return EXIT_FAILURE;
 	}
 
-	int u, v;
+	int u{}, v{};
 	while (file >> u >> v)
 	{
-		graph[u][v] = true;
+		graph(u, v) = true;
 	}
 
 	puts("Done reading file. File saved in shared memory! 🥳🥳");
@@ -37,37 +44,29 @@ int main()
 	if (pid == 0)
 	{
 		// Child process
-		int cnt = 0;
-		for (size_t i = 0; i < VEC_LEN; i++)
-		{
-			for (size_t j = 0; j < VEC_LEN; j++)
-			{
-				if (graph[i][j])
-				{
-					cnt++;
-				}
-				graph[i][j] = 1 - graph[i][j];
-			}
-		}
-		cout << "Child process: " << cnt << endl;
-		exit(EXIT_SUCCESS);
+		execl("./child",
+			  "child",
+			  to_string(shmkey).c_str(), // Convert key_t to string
+			  "1",						 // Number of child process
+			  nullptr);
 	}
 	else if (pid > 0)
 	{
 		// Parent process
 		wait(nullptr);
+
 		int cnt = 0;
 		for (size_t i = 0; i < VEC_LEN; i++)
 		{
 			for (size_t j = 0; j < VEC_LEN; j++)
 			{
-				if (graph[i][j])
+				if (graph(i, j))
 				{
 					cnt++;
 				}
 			}
 		}
-		cout << "Parent process: " << cnt << endl;
+		cout << "Parent Process: " << cnt << endl;
 	}
 	else
 	{
