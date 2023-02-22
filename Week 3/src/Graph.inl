@@ -1,60 +1,63 @@
 template <typename T>
-Graph<T>::Graph(key_t key, size_t size)
-	: m_size(size)
+Graph<T>::Graph(key_t key, size_t sz)
+	: size(sz)
 {
-	shmId = shmget(key, size * size * sizeof(T), IPC_CREAT | 0666);
+	this->shmId = shmget(key, sz * sz * sizeof(T), IPC_CREAT | 0666);
 	if (shmId < 0)
 	{
 		perror("shmget");
 		throw std::bad_alloc{};
 	}
 
-	void *ptr = shmat(shmId, nullptr, 0);
+	void *ptr = shmat(this->shmId, nullptr, 0);
 
 	if (ptr == reinterpret_cast<void *>(-1))
 	{
 		perror("shmat");
+		shmctl(this->shmId, IPC_RMID, nullptr);
 		throw std::bad_alloc{};
 	}
 
-	m_data = reinterpret_cast<T *>(ptr);
+	this->data = reinterpret_cast<T *>(ptr);
 }
 
 template <typename T>
 Graph<T>::~Graph()
 {
-	shmdt(m_data);
-	shmctl(shmId, IPC_RMID, nullptr);
+	shmdt(this->data);
+	shmctl(this->shmId, IPC_RMID, nullptr);
 }
 
 template <typename T>
 void Graph<T>::init(const T &val)
 {
-	std::fill(m_data, m_data + m_size * m_size, val);
+	std::fill(this->data, this->data + this->size * this->size, val);
 }
 
 template <typename T>
 size_t Graph<T>::getSize() const
 {
-	return m_size;
+	return this->size;
 }
 
 template <typename T>
 T &Graph<T>::operator()(size_t i, size_t j)
 {
-	if (i >= m_size or j >= m_size)
+	if (i >= this->size or
+		j >= this->size)
 	{
 		throw std::out_of_range("Index out of range");
 	}
-	return m_data[i * m_size + j];
+	return this->data[i * this->size + j];
 }
 
 template <typename T>
 const T &Graph<T>::operator()(size_t i, size_t j) const
 {
-	if (i >= m_size or j >= m_size)
+	if (i >= this->size or
+		j >= this->size)
 	{
 		throw std::out_of_range("Index out of range");
 	}
-	return m_data[i * m_size + j];
+	return this->data[i * this->size + j];
 }

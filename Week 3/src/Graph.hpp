@@ -22,9 +22,9 @@ public:
 	const T &operator()(size_t i, size_t j) const;
 
 private:
-	T *m_data = nullptr;
-	size_t m_size = 0;
-	int shmId;
+	T *data{nullptr};
+	size_t size{};
+	int shmId{};
 };
 
 #include "Graph.inl"
