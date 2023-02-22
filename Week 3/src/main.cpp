@@ -31,6 +31,7 @@ int main()
 	while (file >> u >> v)
 	{
 		graph(u, v) = true;
+		graph(v, u) = true;
 	}
 
 	puts("Done reading file. File saved in shared memory! 🥳🥳");
