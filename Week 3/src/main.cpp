@@ -7,7 +7,7 @@ using namespace std;
 int main()
 {
 	// Create shared memory
-	key_t shmkey = ftok("input/facebook_combined.txt", 1);
+	auto shmkey = ftok("input/facebook_combined.txt", 1);
 
 	if (shmkey == -1)
 	{
@@ -27,7 +27,7 @@ int main()
 		return EXIT_FAILURE;
 	}
 
-	int u{}, v{};
+	int32_t u{}, v{};
 	while (file >> u >> v)
 	{
 		graph(u, v) = true;
@@ -35,43 +35,31 @@ int main()
 	}
 
 	puts("Done reading file. File saved in shared memory! 🥳🥳");
-
 	file.close();
 
-	// Child for now just creates the dual graph (inverts the edges)
-
-	pid_t pid = fork();
-
+	auto pid = fork();
 	if (pid == 0)
 	{
-		// Child process
-		execl("./child",
-			  "child",
-			  to_string(shmkey).c_str(), // Convert key_t to string
-			  "1",						 // Number of child process
+		// Producer Process
+		execl("./producer",
+			  "./producer",
+			  to_string(shmkey).c_str(),
 			  nullptr);
 	}
 	else if (pid > 0)
 	{
-		// Parent process
-		wait(nullptr);
-
-		int cnt = 0;
-		for (size_t i = 0; i < VEC_LEN; i++)
+		while (true)
 		{
-			for (size_t j = 0; j < VEC_LEN; j++)
-			{
-				if (graph(i, j))
-				{
-					cnt++;
-				}
-			}
+			this_thread::sleep_for(chrono::seconds(3));
+
+			cout << "Parent Process: " << graph.getSize() << endl;
 		}
-		cout << "Parent Process: " << cnt << endl;
 	}
 	else
 	{
 		cout << "Error forking" << endl;
 		return EXIT_FAILURE;
 	}
+
+	graph.remove_shm();
 }

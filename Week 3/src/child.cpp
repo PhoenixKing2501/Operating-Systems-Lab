@@ -11,21 +11,22 @@ int main(int argc, char const *argv[])
 		return EXIT_FAILURE;
 	}
 
-	Graph<bool> graph(stoi(argv[1]));
+	const Graph<bool> graph(stoi(argv[1]));
 	cout << "Number: " << argv[2] << endl;
 
-	int cnt{};
-	for (size_t i{}; i < VEC_LEN; ++i)
-	{
-		for (size_t j{}; j < VEC_LEN; ++j)
-		{
-			if (graph(i, j))
-			{
-				++cnt;
-			}
-			graph(i, j) = not graph(i, j);
-		}
-	}
+	// uint64_t cnt{};
+	// for (size_t i{}; i < graph.getSize(); ++i)
+	// {
+	// 	for (size_t j{}; j < i; ++j)
+	// 	{
+	// 		if (graph(i, j))
+	// 		{
+	// 			++cnt;
+	// 		}
+	// 		graph(i, j) = not graph(i, j);
+	// 		graph(j, i) = not graph(j, i);
+	// 	}
+	// }
 
-	cout << "Child Process: " << cnt << endl;
+	// cout << "Child Process: " << cnt << endl;
 }
