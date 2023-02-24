@@ -8,7 +8,7 @@
 #include <sys/shm.h>
 
 constexpr size_t VEC_LEN = 9'000;
-constexpr size_t SIZE = 4'039;
+constexpr size_t SIZE = 100;
 
 template <typename T>
 class Graph
