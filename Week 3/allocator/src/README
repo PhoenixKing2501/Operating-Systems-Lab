@@ -1,0 +1,15 @@
+The  enclosed  allocator  works  with  binutils-2.12,  gcc-3.0.4,  and
+glibc-2.2.5 on  x386 Linux.   The project is  a working example  of an
+allocator as described in Bjarne  Stroustrup's 3rd Edition of the _The
+C++ Programming Language_.  This work  is also part of the J2K library
+and is released under a GPL license there.
+
+This allocator  is a shared,  pooled memory allocator.   The resulting
+objects  are visible  to all  processes which  attached to  the shared
+memory segments.  The allocator allows developers to share the cotents
+of their  vectors, maps,  sets, etc amoung  multiple processes  on the
+same machine.
+
+
+This release moves the allocator  away from STLPORT and toward the GNU
+C++ compiler and libraries.
