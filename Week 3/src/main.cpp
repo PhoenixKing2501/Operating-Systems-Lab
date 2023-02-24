@@ -1,5 +1,6 @@
 #include <bits/stdc++.h>
 #include <sys/wait.h>
+#include <errno.h>
 
 #include "Graph.hpp"
 using namespace std;
@@ -7,11 +8,11 @@ using namespace std;
 int main()
 {
 	// Create shared memory
-	auto shmkey = ftok("input/facebook_combined.txt", 1);
+	auto shmkey = ftok("/home/swarup/Desktop/SEM_6/OS_LAB/Week 3/input/facebook_combined.txt", 1);
 
 	if (shmkey == -1)
 	{
-		perror("ftok");
+		fprintf(stderr, "ftok failed: %s\n", strerror(errno));
 		return EXIT_FAILURE;
 	}
 
@@ -46,19 +47,40 @@ int main()
 			  to_string(shmkey).c_str(),
 			  nullptr);
 	}
-	else if (pid > 0)
-	{
-		while (true)
-		{
-			this_thread::sleep_for(chrono::seconds(3));
-
-			cout << "Parent Process: " << graph.getSize() << endl;
-		}
-	}
-	else
+	else if (pid == -1)
 	{
 		cout << "Error forking" << endl;
 		return EXIT_FAILURE;
+	}
+
+	// start 10 consumer processes
+	for (int32_t i = 0; i < 10; i++)
+	{
+		auto pid = fork();
+		if (pid == 0)
+		{
+			// Consumer Process
+			execl("./consumer",
+				  "./consumer",
+				  to_string(shmkey).c_str(),
+				  to_string(i).c_str(),
+				  nullptr);
+		}
+		else if (pid > 0)
+		{
+			continue;
+		}
+		else
+		{
+			cout << "Error forking" << endl;
+			return EXIT_FAILURE;
+		}
+	}
+
+	//wait on all processes
+	for (int32_t i = 0; i < 11; i++)
+	{
+		wait(nullptr);
 	}
 
 	graph.remove_shm();
