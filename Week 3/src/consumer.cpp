@@ -208,7 +208,7 @@ int main(int argc, char const *argv[])
     Graph<bool> graph(stoi(argv[1]));
     while (true)
     {
-        this_thread::sleep_for(chrono::seconds(14));
+        this_thread::sleep_for(chrono::seconds(30));
         iteration++;
 
         string filename = "consumer" + to_string(num) + ".txt";
@@ -224,8 +224,8 @@ int main(int argc, char const *argv[])
         en = old_size + ((num + 1) * new_node_cnt) / 10 - 1;
 
         file << "Iteration: " << iteration << "\n";
-        cout << "Number of unique nodes in graph: " << nodes << "\n";
-        cout << "Number of new nodes mapped to " << num << " consumer: " << en - st + 1 << " pid: " << getpid() << "\n";
+        cout << "Number of nodes in graph: " << nodes << "\n";
+        cout << "Number of new nodes mapped to " << num << " consumer: " << en - st + 1;
 
         if (opt_flag)
         {
@@ -237,7 +237,7 @@ int main(int argc, char const *argv[])
         }
 
         file.close();
-        // calculate running time for consumer every 5 iterations
+        /*calculate running time for consumer every 5 iterations
         if (iteration % 5 == 0)
         {
             ofstream time_file;
@@ -251,7 +251,7 @@ int main(int argc, char const *argv[])
             FILE *fp = fopen(dir_name, "r");
             if (fp == NULL)
             {
-                /*throw error file not found*/
+                //throw error file not found
                 throw std::runtime_error("File not found");
             }
             if (fscanf(fp, "%*d %*s %*c %*d %*d %*d %*d %*d "
@@ -267,6 +267,6 @@ int main(int argc, char const *argv[])
             }
             time_file << "Iteration:" << iteration << ":" << non_sleep_time << "\n";
             time_file.close();
-        }
+        }*/
     }
 }

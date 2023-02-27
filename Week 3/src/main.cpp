@@ -49,7 +49,7 @@ int main(int argc, char const *argv[])
 		graph(v, u) = true;
 	}
 
-	puts("Done reading file. File saved in shared memory! 🥳🥳");
+	puts("Done reading file. File saved in shared memory!");
 	file.close();
 
 	auto pid = fork();
