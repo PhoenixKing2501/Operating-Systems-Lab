@@ -64,5 +64,19 @@ int main(int argc, char const *argv[])
 		}
 
 		cout << "New size from Producer: " << graph.getSize() << endl;
+
+		// print the adjacency matrix to a file
+		//^Uncomment this to print the adjacency matrix to a file
+		// ofstream ofFile("adjacency_matrix.txt");
+		// ofFile << graph.getSize() << "\n";
+		// for (size_t i = 0; i < graph.getSize(); ++i)
+		// {
+		// 	for (size_t j = 0; j < graph.getSize(); ++j)
+		// 	{
+		// 		ofFile << graph(i, j) << " ";
+		// 	}
+		// 	ofFile << "\n";
+		// }
+		// ofFile.close();
 	}
 }

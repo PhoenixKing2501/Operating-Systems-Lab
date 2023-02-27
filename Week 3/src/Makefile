@@ -15,6 +15,5 @@ run_optimize: main producer consumer
 run: main producer consumer
 	./main 
 
-
 clean:
-	-rm main producer consumer consumer[0-9].txt consumer[0-9]time.txt
+	-rm main producer consumer consumer[0-9].txt consumer[0-9]time.txt adjacency_matrix.txt

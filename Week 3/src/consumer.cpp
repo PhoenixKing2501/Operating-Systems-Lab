@@ -120,7 +120,7 @@ void optimize(Graph<bool> &graph)
     }
     for (auto &i : old_nodes)
     {
-        for (size_t j = 0; j < old_size; ++j)
+        for (auto &j : old_nodes)
         {
             /* compute path from mapped nodes to all pre-existing nodes */
             /* if path shortened by introduction of any of the new nodes, update */
@@ -200,7 +200,6 @@ int main(int argc, char const *argv[])
     }
     num = stoi(argv[2]);
     Graph<bool> graph(stoi(argv[1]));
-    time_t start = time(NULL);
     while (true)
     {
         this_thread::sleep_for(chrono::seconds(14));
@@ -228,15 +227,32 @@ int main(int argc, char const *argv[])
         }
 
         file.close();
-        // store running time of current process for every 5 iterations into a txt file consumer<num>time.txt
+        // calculate running time for consumer every 5 iterations
         if (iteration % 5 == 0)
         {
+            ofstream time_file;
             string time_filename = "consumer" + to_string(num) + "time.txt";
             time_file.open(time_filename, ios::out | ios::app);
-            time_t end = time(NULL);
-            time_file << "Iteration:" << iteration << ":" << end - start << "\n";
+            int pid = getpid();
+            char dir_name[100];
+            int non_sleep_time;
+            int utime, stime, cutime, cstime;
+            sprintf(dir_name, "/proc/%d/stat", pid);
+            FILE *fp = fopen(dir_name, "r");
+            if (fp == NULL)
+            {
+                fprintf(stderr, "Process %d not found\n", pid);
+                exit(1);
+            }
+            if (fscanf(fp, "%*d %*s %*c %*d %*d %*d %*d %*d "
+                           "%*u %*u %*u %*u %*u %d %d %d %d",
+                       &utime, &stime, &cutime, &cstime) == 4)
+            {
+                non_sleep_time = utime + stime;
+                fclose(fp);
+            }
+            time_file << "Iteration:" << iteration << ":" << non_sleep_time << "\n";
             time_file.close();
         }
-        //! Doesn't work,gives same times for both optimised and unoptimised
     }
 }
