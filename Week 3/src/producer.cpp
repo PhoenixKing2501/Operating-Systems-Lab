@@ -13,8 +13,7 @@ int main(int argc, char const *argv[])
 
 	Graph<bool> graph(stoi(argv[1]));
 
-	// mt19937_64 gen{random_device{}()};
-	mt19937_64 gen{120};
+	mt19937_64 gen{random_device{}()};
 	uniform_int_distribution<int32_t> dist1{10, 30};
 	uniform_int_distribution<int32_t> dist2{1, 20};
 
@@ -22,7 +21,7 @@ int main(int argc, char const *argv[])
 
 	while (true)
 	{
-		this_thread::sleep_for(chrono::seconds(25));
+		this_thread::sleep_for(chrono::seconds(50));
 
 		int32_t m = dist1(gen);
 		size_t old_size = graph.getSize();
