@@ -5,8 +5,22 @@
 #include "Graph.hpp"
 using namespace std;
 
-int main()
+int main(int argc, char const *argv[])
 {
+	bool opt_flag = false;
+	// check if -optimize flag specified by user
+	if (argc == 2)
+	{
+		if (strcmp(argv[1], "-optimize") == 0)
+		{
+			opt_flag = true;
+		}
+		else
+		{
+			cout << "Invalid option\n";
+			exit(EXIT_FAILURE);
+		}
+	}
 	// Create shared memory
 	auto shmkey = ftok("input/facebook_combined_short.txt", 1);
 
@@ -59,12 +73,25 @@ int main()
 		auto pid = fork();
 		if (pid == 0)
 		{
-			// Consumer Process
-			execl("./consumer",
-				  "./consumer",
-				  to_string(shmkey).c_str(),
-				  to_string(i).c_str(),
-				  nullptr);
+			if (opt_flag)
+			{
+				// Optimized Consumer Process
+				execl("./consumer",
+					  "./consumer",
+					  to_string(shmkey).c_str(),
+					  to_string(i).c_str(),
+					  "-optimize",
+					  nullptr);
+			}
+			else
+			{
+				// Consumer Process
+				execl("./consumer",
+					  "./consumer",
+					  to_string(shmkey).c_str(),
+					  to_string(i).c_str(),
+					  nullptr);
+			}
 		}
 		else if (pid > 0)
 		{

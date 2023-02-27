@@ -7,8 +7,8 @@
 #include <exception>
 #include <sys/shm.h>
 
-constexpr size_t VEC_LEN = 9'000;
-constexpr size_t SIZE = 100;
+constexpr size_t VEC_LEN = 200;
+constexpr size_t SIZE = 20;
 
 template <typename T>
 class Graph

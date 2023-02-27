@@ -13,7 +13,8 @@ int main(int argc, char const *argv[])
 
 	Graph<bool> graph(stoi(argv[1]));
 
-	mt19937_64 gen{random_device{}()};
+	// mt19937_64 gen{random_device{}()};
+	mt19937_64 gen{120};
 	uniform_int_distribution<int32_t> dist1{10, 30};
 	uniform_int_distribution<int32_t> dist2{1, 20};
 
@@ -21,7 +22,7 @@ int main(int argc, char const *argv[])
 
 	while (true)
 	{
-		this_thread::sleep_for(chrono::seconds(5));
+		this_thread::sleep_for(chrono::seconds(25));
 
 		int32_t m = dist1(gen);
 		size_t old_size = graph.getSize();
@@ -34,17 +35,15 @@ int main(int argc, char const *argv[])
 			continue;
 		}
 
-		vector<pair<double, size_t>> v{};
-		for (size_t j = 0; j < old_size; ++j)
-		{
-			v.push_back({dist3(gen) * graph.getDegree(j), j});
-		}
-
 		graph.setSize(new_size);
 		for (size_t i = old_size; i < new_size; ++i)
 		{
-			auto v_copy = v;
-			priority_queue<pair<double, size_t>> pq{v_copy.begin(), v_copy.end()};
+			vector<pair<double, size_t>> v{};
+			for (size_t j = 0; j < old_size; ++j)
+			{
+				v.push_back({dist3(gen) * graph.getDegree(j), j});
+			}
+			priority_queue<pair<double, size_t>> pq{v.begin(), v.end()};
 
 			int32_t n = dist2(gen);
 
@@ -63,5 +62,19 @@ int main(int argc, char const *argv[])
 		}
 
 		cout << "New size from Producer: " << graph.getSize() << endl;
+
+		// print the adjacency matrix to a file
+		//^Uncomment this to print the adjacency matrix to a file
+		// ofstream ofFile("adjacency_matrix.txt");
+		// ofFile << graph.getSize() << "\n";
+		// for (size_t i = 0; i < graph.getSize(); ++i)
+		// {
+		// 	for (size_t j = 0; j < graph.getSize(); ++j)
+		// 	{
+		// 		ofFile << graph(i, j) << " ";
+		// 	}
+		// 	ofFile << "\n";
+		// }
+		// ofFile.close();
 	}
 }
