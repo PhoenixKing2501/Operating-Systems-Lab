@@ -6,16 +6,23 @@ using namespace std;
 int32_t num;
 int32_t iteration = 0;
 ofstream file;
+/*file to write paths of this consumer*/
 ofstream time_file;
+/*file to print time every 5 iterations*/
 size_t nodes;
+/*number of nodes in graph currently*/
 size_t old_size = 0;
+/*store old number of nodes in graph*/
 size_t st, en;
+/*start and end indexes for new nodes assigned to this consumer*/
 
 vector<vector<int8_t>> dist_mat(VEC_LEN, vector<int8_t>(VEC_LEN, numeric_limits<int8_t>::max()));
 vector<vector<vector<size_t>>> path_mat(VEC_LEN, vector<vector<size_t>>(VEC_LEN, vector<size_t>()));
 
 vector<size_t> old_nodes;
+/*vector to store old nodes for this consumer process*/
 vector<size_t> new_nodes;
+/*vector to store new nodes for this consumer process*/
 
 void dijkstra_opt(size_t src, Graph<bool> &graph)
 {
@@ -120,18 +127,17 @@ void optimize(Graph<bool> &graph)
     }
     for (auto &i : old_nodes)
     {
-        for (auto &j : old_nodes)
+        for (size_t j = 0; j < nodes; j++)
         {
             /* compute path from mapped nodes to all pre-existing nodes */
             /* if path shortened by introduction of any of the new nodes, update */
 
             long int conn_newnode = -1;
-            for (auto &k : new_nodes)
+            for (size_t k = old_size; k < nodes; k++)
             {
                 if (dist_mat[i][k] + dist_mat[k][j] < dist_mat[i][j])
                 {
                     conn_newnode = k;
-                    break;
                 }
             }
             if (conn_newnode != -1)
@@ -208,11 +214,15 @@ int main(int argc, char const *argv[])
         string filename = "consumer" + to_string(num) + ".txt";
         file.open(filename, ios::out | ios::app);
 
+        /*get total nodes in graph*/
         nodes = graph.getSize();
+        /*get total new nodes created in the graph*/
         size_t new_node_cnt = nodes - old_size;
 
+        /*calculate start and end index of new nodes for this consumer process*/
         st = old_size + (num * new_node_cnt) / 10;
         en = old_size + ((num + 1) * new_node_cnt) / 10 - 1;
+
         file << "Iteration: " << iteration << "\n";
         cout << "Number of unique nodes in graph: " << nodes << "\n";
         cout << "Number of new nodes mapped to " << num << " consumer: " << en - st + 1 << " pid: " << getpid() << "\n";
@@ -241,8 +251,8 @@ int main(int argc, char const *argv[])
             FILE *fp = fopen(dir_name, "r");
             if (fp == NULL)
             {
-                fprintf(stderr, "Process %d not found\n", pid);
-                exit(1);
+                /*throw error file not found*/
+                throw std::runtime_error("File not found");
             }
             if (fscanf(fp, "%*d %*s %*c %*d %*d %*d %*d %*d "
                            "%*u %*u %*u %*u %*u %d %d %d %d",
@@ -250,6 +260,10 @@ int main(int argc, char const *argv[])
             {
                 non_sleep_time = utime + stime;
                 fclose(fp);
+            }
+            else
+            {
+                throw std::runtime_error("Error in reading");
             }
             time_file << "Iteration:" << iteration << ":" << non_sleep_time << "\n";
             time_file.close();

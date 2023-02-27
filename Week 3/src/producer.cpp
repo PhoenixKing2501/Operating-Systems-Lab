@@ -35,17 +35,15 @@ int main(int argc, char const *argv[])
 			continue;
 		}
 
-		vector<pair<double, size_t>> v{};
-		for (size_t j = 0; j < old_size; ++j)
-		{
-			v.push_back({dist3(gen) * graph.getDegree(j), j});
-		}
-
 		graph.setSize(new_size);
 		for (size_t i = old_size; i < new_size; ++i)
 		{
-			auto v_copy = v;
-			priority_queue<pair<double, size_t>> pq{v_copy.begin(), v_copy.end()};
+			vector<pair<double, size_t>> v{};
+			for (size_t j = 0; j < old_size; ++j)
+			{
+				v.push_back({dist3(gen) * graph.getDegree(j), j});
+			}
+			priority_queue<pair<double, size_t>> pq{v.begin(), v.end()};
 
 			int32_t n = dist2(gen);
 
