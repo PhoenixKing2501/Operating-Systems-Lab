@@ -33,7 +33,7 @@ struct Node
 				{
 					return a.timestamp < b.timestamp;
 				}
-				else
+				else if (this->sort_order == Type::Priority)
 				{
 					const auto &na = *nodes[a.user_id].neighbors;
 					const auto &nb = *nodes[b.user_id].neighbors;
