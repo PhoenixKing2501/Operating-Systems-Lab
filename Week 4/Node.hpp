@@ -38,8 +38,7 @@ struct Node
 					const auto &na = *nodes[a.user_id].neighbors;
 					const auto &nb = *nodes[b.user_id].neighbors;
 
-					vector<size_t> inta{};
-					vector<size_t> intb{};
+					vector<size_t> inta{}, intb{};
 
 					set_intersection(na.begin(), na.end(),
 									 this->neighbors->begin(),
