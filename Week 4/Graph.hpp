@@ -8,16 +8,13 @@
 using namespace std;
 
 template <typename T>
-class Graph
+struct Graph
 {
-private:
 	vector<vector<size_t>> adjList{};
-	vector<T> nodes{};
 	size_t size{};
 
-public:
 	Graph() = default;
-	Graph(size_t sz) : adjList(sz), nodes(sz), size(sz){};
+	Graph(size_t sz) : adjList(sz), size(sz){};
 	Graph(const Graph &other) = default;
 	Graph(Graph &&other) noexcept = default;
 	Graph &operator=(const Graph &other) = default;
@@ -38,10 +35,6 @@ public:
 	// Get the neighbors of a node
 	vector<size_t> &operator[](size_t index) { return this->adjList[index]; }
 	const vector<size_t> &operator[](size_t index) const { return this->adjList[index]; }
-
-	// Get the node at a given index
-	T &getNode(size_t index) { return this->nodes[index]; }
-	const T &getNode(size_t index) const { return this->nodes[index]; }
 
 	// Get the size of the graph
 	size_t getSize() const { return this->size; }
