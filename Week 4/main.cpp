@@ -6,20 +6,19 @@ using namespace std;
 
 constexpr size_t SIZE{37'700};
 
-int main()
+void readGraph(
+	Graph<Node> &graph,
+	const string &filename)
 {
-	ifstream file{"input/musae_git_edges.csv"};
+	ifstream file{filename};
 	if (!file.is_open())
 	{
 		cerr << "Failed to open file" << endl;
-		return EXIT_FAILURE;
+		return;
 	}
 
 	string line{};
 	getline(file, line); // Skip the first line
-
-	// Create the graph
-	Graph<Node> graph{SIZE};
 
 	// Read the file
 	while (getline(file, line))
@@ -36,8 +35,15 @@ int main()
 		// Add the edge
 		graph.addEdge(stoul(tokens[0]), stoul(tokens[1]));
 	}
+}
 
-	file.close();
+int main()
+{
+	// Create the graph
+	Graph<Node> graph{SIZE};
+
+	// Read the graph
+	readGraph(graph, "input/musae_git_edges.csv");
 
 	// Shrink the graph
 	graph.shrinkToFit();

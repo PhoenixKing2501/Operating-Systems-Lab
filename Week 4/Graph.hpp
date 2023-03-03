@@ -30,7 +30,9 @@ public:
 	}
 	void shrinkToFit()
 	{
-		ranges::for_each(this->adjList, [](auto &v) { v.shrink_to_fit(); });
+		ranges::for_each(this->adjList,
+						 [](auto &v)
+						 { v.shrink_to_fit(); });
 	}
 
 	// Get the neighbors of a node
