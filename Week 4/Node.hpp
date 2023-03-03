@@ -56,8 +56,7 @@ struct Node
 	vector<size_t> *neighbors{nullptr};
 
 	Node() = default;
-	Node(size_t id)
-		: id(id)
+	Node(size_t id) : id(id)
 	{
 		static mt19937_64 rng{random_device{}()};
 		static uniform_int_distribution<int> dist{0, 1};
