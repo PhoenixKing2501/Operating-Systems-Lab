@@ -41,17 +41,6 @@ struct Graph
 
 	// Get the adjacency list
 	const vector<vector<size_t>> &getAdjList() const { return this->adjList; }
-
-	// Get the degree of a node
-	size_t getDegree(size_t i) const
-	{
-		if (i >= this->size)
-		{
-			throw std::out_of_range("Index out of range");
-		}
-
-		return this->adjList[i].size();
-	}
 };
 
 #endif // _GRAPH_HPP_

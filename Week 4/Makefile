@@ -1,9 +1,14 @@
-run: main
-	./main > out.txt
+A: main
 
-main: main.cpp Graph.hpp Node.hpp Action.hpp
-	g++ -o main main.cpp -Wall -std=gnu++20 -fdiagnostics-color -D_GNU_SOURCE -I.
+main: main.o userSimulator.o pushUpdate.o readPost.o Graph.hpp Node.hpp Action.hpp Common.hpp
+	g++ -o main main.o userSimulator.o pushUpdate.o readPost.o -lpthread -Wall -std=gnu++20 -fdiagnostics-color -D_GNU_SOURCE -I.
+
+%.o: %.cpp Graph.hpp Node.hpp Action.hpp Common.hpp
+	g++ -c $< -std=c++20 -lpthread -Wall -std=gnu++20 -fdiagnostics-color -D_GNU_SOURCE -I.
+
+run: main
+	./main
 
 clean:
-	rm main
-	> out.txt
+	rm main *.o
+	>sns.log

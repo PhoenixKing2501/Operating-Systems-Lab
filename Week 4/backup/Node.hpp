@@ -4,7 +4,6 @@
 #define _NODE_HPP_
 
 #include "Action.hpp"
-#include "Common.hpp"
 #include <bits/stdc++.h>
 using namespace std;
 
@@ -53,24 +52,15 @@ struct Node
 
 					return inta.size() < intb.size();
 				}
-
-				return false;
 			}};
 	vector<size_t> *neighbors{nullptr};
-	size_t past_actions[3]{};
 
-	/*include parameters like feedQueue_mutex and feedQueue_cond*/
-	pthread_mutex_t feedQueue_mutex;
-	pthread_cond_t feedQueue_cond;
 	Node() = default;
-	Node(size_t id) 
-	: 	id(id), past_actions{}
+	Node(size_t id) : id(id)
 	{
 		static mt19937_64 rng{random_device{}()};
 		static uniform_int_distribution<int> dist{0, 1};
 		this->sort_order = static_cast<Type>(dist(rng));
-		this->feedQueue_mutex = PTHREAD_MUTEX_INITIALIZER;
-		this->feedQueue_cond = PTHREAD_COND_INITIALIZER;
 	}
 
 	Node(const Node &other) = default;
@@ -79,9 +69,9 @@ struct Node
 	Node &operator=(Node &&other) noexcept = default;
 	~Node() = default;
 
-	void setNeighbors(vector<size_t> *neighbors)
+	void setNeighbors(vector<size_t> &neighbors)
 	{
-		this->neighbors = neighbors;
+		this->neighbors = &neighbors;
 	}
 
 	void pushToWall(const Action &action)
@@ -106,20 +96,6 @@ struct Node
 		auto action = this->feedQueue.top();
 		this->feedQueue.pop();
 		return action;
-	}
-
-	Action genNextAction()
-	{
-		static mt19937_64 rng{random_device{}()};
-		static uniform_int_distribution<int> dist{0, 2};
-
-		int action_type = dist(rng);
-
-		this->past_actions[action_type]++;
-
-		return Action(this->id,
-		 this->past_actions[action_type], 
-		 static_cast<Action::Type>(action_type));
 	}
 };
 
