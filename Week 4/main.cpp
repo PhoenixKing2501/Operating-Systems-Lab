@@ -1,27 +1,29 @@
 #include <bits/stdc++.h>
 
 #include "Action.hpp"
+#include "Common.hpp"
 #include "Graph.hpp"
 #include "Node.hpp"
-#include "Common.hpp"
 
 using namespace std;
 
 constexpr size_t SIZE{37'700};
-vector<Node> nodes;
+vector<Node> nodes{};
 queue<Action> shared_queue{};
+FILE *fptr = fopen("sns.log", "w");
 
 /*declare a mutex and a condition variable*/
 pthread_mutex_t shared_queue_mutex = PTHREAD_MUTEX_INITIALIZER;
+// pthread_mutex_t print_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t shared_queue_cond = PTHREAD_COND_INITIALIZER;
 
-char *get_time(time_t unix_timestamp)
+char *get_time(
+	time_t unix_timestamp)
 {
 	// make a dynamic array of 80 characters using new
-	char *time_buf = new char[80];
-	struct tm ts;
-	ts = *localtime(&unix_timestamp);
-	strftime(time_buf, 80, "%a %Y-%m-%d %H:%M:%S %Z", &ts);
+	static char time_buf[100]{};
+	struct tm ts = *localtime(&unix_timestamp);
+	strftime(time_buf, sizeof(time_buf), "%a %Y-%m-%d %H:%M:%S %Z", &ts);
 	return time_buf;
 }
 void readGraph(
@@ -67,10 +69,11 @@ int main()
 	graph.shrinkToFit();
 
 	// Set the neighbors
+	nodes.reserve(SIZE);
 	for (size_t i = 0; i < SIZE; ++i)
 	{
-		nodes.push_back(Node(i));
-		nodes[i].setNeighbors(&graph[i]); // Very important to do this before the next step
+		sort(begin(graph[i]), end(graph[i]));
+		nodes.emplace_back(i, &graph[i]); // Very important to do this before the next step
 	}
 
 	// size_t edges{0};
@@ -94,27 +97,28 @@ int main()
 	array<pthread_t, 36> threads{};
 
 	pthread_create(&threads[0], NULL, userSimulatorRunner, &graph);
-	fputs("User thread created\n", stderr);
 	for (int i = 1; i < 26; i++)
 	{
 		pthread_create(&threads[i], NULL, pushUpdateRunner, &graph);
 	}
-	fputs("PushUpdate threads created\n", stderr);
 
 	for (int i = 26; i < 36; i++)
 	{
 		int *num = new int{i - 26};
 		pthread_create(&threads[i], NULL, readPostRunner, num);
-		fprintf(stderr, "ReadPost thread %d created\n", i);
 	}
-	fputs("ReadPost threads created\n", stderr);
 
-	// this_thread::sleep_for(chrono::seconds(120));
+	for (;;)
+	{
+		this_thread::sleep_for(chrono::seconds(5));
+		fflush(stdout);
+		fflush(fptr);
+	}
 
 	// Join the threads
-	for (int i = 0; i < 36; i++)
-	{
-		pthread_join(threads[i], NULL);
-	}
+	// for (int i = 0; i < 36; i++)
+	// {
+	// 	pthread_join(threads[i], NULL);
+	// }
 	// pthread_exit(NULL);
 }

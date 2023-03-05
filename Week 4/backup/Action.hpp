@@ -19,8 +19,8 @@ struct Action
 	time_t timestamp{};
 
 	Action() = default;
-	Action(size_t user_id, size_t action_id, Type type)
-		: user_id(user_id), action_id(action_id), type(type), timestamp(time(NULL)){};
+	Action(size_t uid, size_t aid, Type typ)
+		: user_id(uid), action_id(aid), type(typ), timestamp(time(nullptr)){};
 	Action(const Action &other) = default;
 	Action(Action &&other) noexcept = default;
 	Action &operator=(const Action &other) = default;

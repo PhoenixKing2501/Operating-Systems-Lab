@@ -10,8 +10,7 @@ using namespace std;
 /*make a runner function for threads [total 10 threads],each function is assigned a set of feed queues,range in parameter
   each function is assigned 3,770 feed queues on which it prints in order stored in it's priority queue*/
 
-void *readPostRunner(
-	void *param)
+void *readPostRunner(void *param)
 {
 	/*param is actually an integer pointer, extract it*/
 	int num = *reinterpret_cast<int *>(param);
@@ -21,16 +20,16 @@ void *readPostRunner(
 	/*monitor for feed queues for nodes in the range st to end using pthead_cond_wait*/
 	while (true)
 	{
-		// FILE *fname = fopen("sns.log", "a");
+		FILE *fname = fopen("sns.log", "a");
 		for (size_t i = st; i < end; i++)
 		{
-			pthread_mutex_lock(&nodes[i].feedQueue_mutex);
+			pthread_mutex_lock(&(nodes[i].feedQueue_mutex));
 			while (nodes[i].feedQueue.empty())
 			{
-				pthread_cond_wait(&nodes[i].feedQueue_cond, &nodes[i].feedQueue_mutex);
+				pthread_cond_wait(&(nodes[i].feedQueue_cond), &(nodes[i].feedQueue_mutex));
 			}
 			/*print the feed queue in order*/
-			while (not nodes[i].feedQueue.empty())
+			while (!nodes[i].feedQueue.empty())
 			{
 				// cout << nodes[i].feedQueue.top().timestamp << " ";
 				// fwrite to file fname in main.cpp
@@ -61,18 +60,11 @@ void *readPostRunner(
 				// 		   "\n";
 				// do as rounak did
 				ostringstream buf;
-				buf << "I read action number " << a.action_id
-					<< " of type " << type
-					<< " posted by user " << a.user_id
-					<< " at time " << get_time(a.timestamp)
-					<< " in feed of user " << i
-					<< "\n";
+				buf << "I read action number" << a.action_id << " of type " << type << " posted by user " << a.user_id << " at time " << get_time(a.timestamp) << " in feed of user " << i << "\n";
 
-				// pthread_mutex_lock(&print_mutex);
-				fwrite(buf.str().c_str(), sizeof(char), buf.str().length(), fptr);
+				fwrite(buf.str().c_str(), sizeof(char), sizeof(buf), fname);
 				// write the same to stdout using fwrite
-				fwrite(buf.str().c_str(), sizeof(char), buf.str().length(), stdout);
-				// pthread_mutex_unlock(&print_mutex);
+				fwrite(buf.str().c_str(), sizeof(char), sizeof(buf), stdout);
 
 				buf.str("");
 				buf.clear();
@@ -81,6 +73,6 @@ void *readPostRunner(
 			}
 			pthread_mutex_unlock(&(nodes[i].feedQueue_mutex));
 		}
-		// fclose(fname);
+		fclose(fname);
 	}
 }

@@ -3,11 +3,27 @@
 #include "Action.hpp"
 #include "Graph.hpp"
 #include "Node.hpp"
+#include "Common.hpp"
+
 using namespace std;
 
 constexpr size_t SIZE{37'700};
-vector<Node> nodes(SIZE);
+vector<Node> nodes;
+queue<Action> shared_queue{};
 
+/*declare a mutex and a condition variable*/
+pthread_mutex_t shared_queue_mutex = PTHREAD_MUTEX_INITIALIZER;
+pthread_cond_t shared_queue_cond = PTHREAD_COND_INITIALIZER;
+
+char *get_time(time_t unix_timestamp)
+{
+	// make a dynamic array of 80 characters using new
+	char *time_buf = new char[80];
+	struct tm ts;
+	ts = *localtime(&unix_timestamp);
+	strftime(time_buf, 80, "%a %Y-%m-%d %H:%M:%S %Z", &ts);
+	return time_buf;
+}
 void readGraph(
 	Graph<Node> &graph,
 	const string &filename)
@@ -53,19 +69,52 @@ int main()
 	// Set the neighbors
 	for (size_t i = 0; i < SIZE; ++i)
 	{
-		nodes[i].setNeighbors(graph[i]); // Very important to do this before the next step
+		nodes.push_back(Node(i));
+		nodes[i].setNeighbors(&graph[i]); // Very important to do this before the next step
 	}
 
-	size_t edges{0};
+	// size_t edges{0};
 
-	for (size_t i = 0; i < SIZE; ++i)
+	// for (size_t i = 0; i < SIZE; ++i)
+	// {
+	// 	printf("Node %6zu has %6zu neighbors and capacity %6zu\n",
+	// 		   i,
+	// 		   nodes[i].neighbors->size(),
+	// 		   nodes[i].neighbors->capacity());
+	// 	edges += graph[i].size();
+	// }
+
+	// printf("Total edges: %zu Average degree: %lf\n", edges / 2, (double)edges / 2 / SIZE);
+
+	// Create the threads
+	// create one user thread
+	// 25 pushUpdate threads
+	// 10 readPost threads
+
+	array<pthread_t, 36> threads{};
+
+	pthread_create(&threads[0], NULL, userSimulatorRunner, &graph);
+	fputs("User thread created\n", stderr);
+	for (int i = 1; i < 26; i++)
 	{
-		printf("Node %6zu has %6zu neighbors and capacity %6zu\n",
-			   i,
-			   graph[i].size(),
-			   graph[i].capacity());
-		edges += graph[i].size();
+		pthread_create(&threads[i], NULL, pushUpdateRunner, &graph);
 	}
+	fputs("PushUpdate threads created\n", stderr);
 
-	printf("Total edges: %zu Average degree: %lf\n", edges / 2, (double)edges / 2 / SIZE);
+	for (int i = 26; i < 36; i++)
+	{
+		int *num = new int{i - 26};
+		pthread_create(&threads[i], NULL, readPostRunner, num);
+		fprintf(stderr, "ReadPost thread %d created\n", i);
+	}
+	fputs("ReadPost threads created\n", stderr);
+
+	// this_thread::sleep_for(chrono::seconds(120));
+
+	// Join the threads
+	for (int i = 0; i < 36; i++)
+	{
+		pthread_join(threads[i], NULL);
+	}
+	// pthread_exit(NULL);
 }
