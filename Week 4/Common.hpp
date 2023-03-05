@@ -14,6 +14,11 @@ extern queue<Action> shared_queue;
 /*declare a mutex and a condition variable*/
 extern pthread_mutex_t shared_queue_mutex;
 extern pthread_cond_t shared_queue_cond;
-
+extern void *userSimulatorRunner(void *);
+extern void *pushUpdateRunner(void *);
+extern void *readPostRunner(void *);
+char *get_time(time_t);
 
 #endif // _COMMON_HPP_
+
+//extern used to declare a variable global that will be used in other files 

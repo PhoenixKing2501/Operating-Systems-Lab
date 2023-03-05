@@ -63,8 +63,8 @@ struct Node
 	pthread_mutex_t feedQueue_mutex;
 	pthread_cond_t feedQueue_cond;
 	Node() = default;
-	Node(size_t id) 
-	: 	id(id), past_actions{}
+	Node(size_t id)
+		: id(id), past_actions{}
 	{
 		static mt19937_64 rng{random_device{}()};
 		static uniform_int_distribution<int> dist{0, 1};
@@ -118,8 +118,8 @@ struct Node
 		this->past_actions[action_type]++;
 
 		return Action(this->id,
-		 this->past_actions[action_type], 
-		 static_cast<Action::Type>(action_type));
+					  this->past_actions[action_type],
+					  static_cast<Action::Type>(action_type));
 	}
 };
 

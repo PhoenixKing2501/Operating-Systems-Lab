@@ -10,5 +10,4 @@ run: main
 	./main
 
 clean:
-	rm main *.o
-	>sns.log
+	rm main *.o sns.log

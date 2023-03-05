@@ -3,21 +3,27 @@
 #include "Action.hpp"
 #include "Graph.hpp"
 #include "Node.hpp"
+#include "Common.hpp"
 
 using namespace std;
 
 constexpr size_t SIZE{37'700};
-vector<Node> nodes(SIZE);
+vector<Node> nodes;
 queue<Action> shared_queue{};
 
 /*declare a mutex and a condition variable*/
 pthread_mutex_t shared_queue_mutex = PTHREAD_MUTEX_INITIALIZER;
 pthread_cond_t shared_queue_cond = PTHREAD_COND_INITIALIZER;
 
-extern void *userSimulatorRunner(void *);
-extern void *pushUpdateRunner(void *);
-extern void *readPostRunner(void *);
-
+char *get_time(time_t unix_timestamp)
+{
+	// make a dynamic array of 80 characters using new
+	char *time_buf = new char[80];
+	struct tm ts;
+	ts = *localtime(&unix_timestamp);
+	strftime(time_buf, 80, "%a %Y-%m-%d %H:%M:%S %Z", &ts);
+	return time_buf;
+}
 void readGraph(
 	Graph<Node> &graph,
 	const string &filename)
@@ -63,6 +69,7 @@ int main()
 	// Set the neighbors
 	for (size_t i = 0; i < SIZE; ++i)
 	{
+		nodes.push_back(Node(i));
 		nodes[i].setNeighbors(&graph[i]); // Very important to do this before the next step
 	}
 
