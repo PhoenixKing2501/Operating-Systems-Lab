@@ -11,13 +11,13 @@ using namespace std;
 
 /*parameter for this thread is graph*/
 
-
 void *pushUpdateRunner(void *_graph)
 {
     Graph<Node> &graph = *reinterpret_cast<Graph<Node> *>(_graph);
     ostringstream buf;
     while (true)
     {
+        FILE *fptr = fopen("sns.log", "a");
         pthread_mutex_lock(&shared_queue_mutex);
         while (shared_queue.empty())
         {
@@ -49,7 +49,6 @@ void *pushUpdateRunner(void *_graph)
             << ", type " << type
             << " posted at time " << get_time(action.timestamp) << "\n";
 
-        FILE *fptr = fopen("sns.log", "a");
         fwrite(buf.str().c_str(), sizeof(char), buf.str().length(), fptr);
         fwrite(buf.str().c_str(), sizeof(char), buf.str().length(), stdout);
 
@@ -63,6 +62,8 @@ void *pushUpdateRunner(void *_graph)
                 << "\n";
             fwrite(buf.str().c_str(), sizeof(char), buf.str().length(), fptr);
             fwrite(buf.str().c_str(), sizeof(char), buf.str().length(), stdout);
+            buf.str("");
+            buf.clear();
             // push to feed queue of node
             pthread_mutex_lock(&nodes[node].feedQueue_mutex);
             nodes[node].pushToFeed(action);
