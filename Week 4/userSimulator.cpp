@@ -66,7 +66,7 @@ void *userSimulatorRunner(void *ptr)
             {
                 Action &&action = nodes[node].genNextAction();
                 /*push to shared queue and pthread_cond_signal that this queue has changed and lock before pushing*/
-                cerr << action.user_id << endl;
+                // cerr << action.user_id << endl;
                 pthread_mutex_lock(&shared_queue_mutex);
                 shared_queue.push(action);
                 pthread_mutex_unlock(&shared_queue_mutex);
@@ -74,7 +74,22 @@ void *userSimulatorRunner(void *ptr)
                 nodes[node].pushToWall(action);
                 /* push to global queue accessed by pushUpdate : remaining part, discussion needed on the structure of the global queue */
 
-                buf << "User " << node << " performs  " << action.action_id << "\n";
+                /*get action based on type of action*/
+                string type{};
+                if (action.type == Action::Type::Post)
+                {
+                    type = "Post";
+                }
+                else if (action.type == Action::Type::Comment)
+                {
+                    type = "Comment";
+                }
+                else if (action.type == Action::Type::Like)
+                {
+                    type = "Like";
+                }
+
+                buf << "User " << node << " performs  " << type << "\n";
                 fwrite(buf.str().c_str(), sizeof(char), buf.str().length(), fptr);
                 fwrite(buf.str().c_str(), sizeof(char), buf.str().length(), stdout);
                 buf.str("");

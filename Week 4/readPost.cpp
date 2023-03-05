@@ -20,6 +20,7 @@ void *readPostRunner(void *param)
 	/*monitor for feed queues for nodes in the range st to end using pthead_cond_wait*/
 	while (true)
 	{
+		FILE *fname = fopen("sns.log", "a");
 		for (size_t i = st; i < end; i++)
 		{
 			pthread_mutex_lock(&(nodes[i].feedQueue_mutex));
@@ -28,7 +29,7 @@ void *readPostRunner(void *param)
 				pthread_cond_wait(&(nodes[i].feedQueue_cond), &(nodes[i].feedQueue_mutex));
 			}
 			/*print the feed queue in order*/
-			while (not nodes[i].feedQueue.empty())
+			while (!nodes[i].feedQueue.empty())
 			{
 				// cout << nodes[i].feedQueue.top().timestamp << " ";
 				// fwrite to file fname in main.cpp
@@ -41,31 +42,37 @@ void *readPostRunner(void *param)
 				string type{};
 				if (a.type == Action::Type::Post)
 				{
-					type = "post";
+					type = "Post";
 				}
 				else if (a.type == Action::Type::Comment)
 				{
-					type = "comment";
+					type = "Comment";
 				}
 				else if (a.type == Action::Type::Like)
 				{
-					type = "like";
+					type = "Like";
 				}
-				string s = "I read action number " + to_string(a.action_id) +
-						   " of type " + type +
-						   " posted by user " + to_string(a.user_id) +
-						   " at time " + to_string(a.timestamp) +
-						   "in feed of user " + to_string(i) +
-						   "\n";
-				FILE *fname = fopen("sns.log", "a");
-				fwrite(s.c_str(), sizeof(char), s.size(), fname);
+				// string s = "I read action number " + to_string(a.action_id) +
+				// 		   " of type " + type +
+				// 		   " posted by user " + to_string(a.user_id) +
+				// 		   " at time " + to_string(a.timestamp) +
+				// 		   "in feed of user " + to_string(i) +
+				// 		   "\n";
+				// do as rounak did
+				ostringstream buf;
+				buf << "I read action number" << a.action_id << " of type " << type << " posted by user " << a.user_id << " at time " << get_time(a.timestamp) << " in feed of user " << i << "\n";
+
+				fwrite(buf.str().c_str(), sizeof(char), sizeof(buf), fname);
 				// write the same to stdout using fwrite
-				fwrite(s.c_str(), sizeof(char), s.size(), stdout);
-				fclose(fname);
+				fwrite(buf.str().c_str(), sizeof(char), sizeof(buf), stdout);
+
+				buf.str("");
+				buf.clear();
 				/*opened closed several times,not efficient but atleast need to see live output*/
 				// if a.type is comment then type is "comment" and so on
 			}
 			pthread_mutex_unlock(&(nodes[i].feedQueue_mutex));
 		}
+		fclose(fname);
 	}
 }
