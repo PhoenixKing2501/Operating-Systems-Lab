@@ -25,10 +25,10 @@ void *readPostRunner(
 		for (size_t i = st; i < end; i++)
 		{
 			pthread_mutex_lock(&nodes[i].feedQueue_mutex);
-			while (nodes[i].feedQueue.empty())
-			{
-				pthread_cond_wait(&nodes[i].feedQueue_cond, &nodes[i].feedQueue_mutex);
-			}
+			// while (nodes[i].feedQueue.empty())
+			// {
+			// 	pthread_cond_wait(&nodes[i].feedQueue_cond, &nodes[i].feedQueue_mutex);
+			// }
 			/*print the feed queue in order*/
 			while (not nodes[i].feedQueue.empty())
 			{

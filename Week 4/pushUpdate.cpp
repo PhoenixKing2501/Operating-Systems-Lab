@@ -75,7 +75,7 @@ void *pushUpdateRunner(
 			pthread_mutex_lock(&nodes[node].feedQueue_mutex);
 			nodes[node].pushToFeed(action);
 			// pthread_cond_broadcast(&nodes[node].feedQueue_cond);
-			pthread_cond_signal(&nodes[node].feedQueue_cond);
+			// pthread_cond_signal(&nodes[node].feedQueue_cond);
 			pthread_mutex_unlock(&nodes[node].feedQueue_mutex);
 			/*keep the cond_signal outside mutex lock and observe behaviour*/
 			/*use broadcast and observe behaviour*/
