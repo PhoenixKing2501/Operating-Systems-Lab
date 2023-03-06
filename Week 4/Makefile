@@ -10,7 +10,7 @@ run: main
 	./main > out.txt
 
 clean:
-	rm main *.o 
+	rm main *.o
 
 clean_sns:
-	rm sns.log
+	rm sns.log out.txt
