@@ -1,33 +1,31 @@
 #include "Common.hpp"
-#include "Graph.hpp"
-#include "Node.hpp"
-
-#include <bits/stdc++.h>
-#include <chrono>
-
-using namespace std;
 
 /*monitor shared queue,if new element found implement by pusing updates to feed queue of neighbours of node*/
 
 /*parameter for this thread is graph*/
 
-void *pushUpdateRunner(
-	void *_graph)
+void *pushUpdateRunner(void *_num)
 {
-	Graph<Node> &graph = *reinterpret_cast<Graph<Node> *>(_graph);
+	int num = *reinterpret_cast<int *>(_num);
+	delete reinterpret_cast<int *>(_num);
 	ostringstream buf;
-	while (true)
+	for (;;)
 	{
 		// FILE *fptr = fopen("sns.log", "a");
-		pthread_mutex_lock(&shared_queue_mutex);
-		while (shared_queue.empty())
-		{
-			pthread_cond_wait(&shared_queue_cond, &shared_queue_mutex);
-		}
+		// pthread_mutex_lock(&shared_queue_mutex);
+		// while (shared_queue.empty())
+		// {
+		// 	pthread_cond_wait(&shared_queue_cond, &shared_queue_mutex);
+		// }
 
-		Action action = shared_queue.front();
-		shared_queue.pop();
-		pthread_mutex_unlock(&shared_queue_mutex);
+		auto _action = shared_queue.pop(num);
+		// pthread_mutex_unlock(&shared_queue_mutex);
+		if (not _action)
+		{
+			this_thread::sleep_for(chrono::milliseconds(100));
+			continue;
+		}
+		auto action = _action.value();
 		string type{};
 		if (action.type == Action::Type::Post)
 		{
@@ -58,9 +56,9 @@ void *pushUpdateRunner(
 		buf.str("");
 		buf.clear();
 
-		for (auto &&node : graph.adjList[action.user_id])
+		for (auto &&node : *nodes[action.user_id].neighbors)
 		{
-			buf << "Action user_id: " << action.user_id
+			buf << "Action " + type + ", user_id: " << action.user_id
 				<< ", Neighbour: " << node
 				<< "\n";
 

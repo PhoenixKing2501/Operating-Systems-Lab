@@ -5,8 +5,6 @@
 
 #include "Action.hpp"
 #include "Common.hpp"
-#include <bits/stdc++.h>
-using namespace std;
 
 struct Node;
 extern vector<Node> nodes;
@@ -56,8 +54,8 @@ struct Node
 
 				return false;
 			}};
-	vector<size_t> *neighbors{nullptr};
 	size_t past_actions[3]{};
+	vector<size_t> *neighbors{nullptr};
 
 	/*include parameters like feedQueue_mutex and feedQueue_cond*/
 	pthread_mutex_t feedQueue_mutex;

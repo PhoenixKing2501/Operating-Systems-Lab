@@ -1,17 +1,9 @@
-#include "Action.hpp"
 #include "Common.hpp"
-#include "Graph.hpp"
-#include "Node.hpp"
-
-#include <bits/stdc++.h>
-#include <pthread.h>
-using namespace std;
 
 /*make a runner function for threads [total 10 threads],each function is assigned a set of feed queues,range in parameter
   each function is assigned 3,770 feed queues on which it prints in order stored in it's priority queue*/
 
-void *readPostRunner(
-	void *param)
+void *readPostRunner(void *param)
 {
 	/*param is actually an integer pointer, extract it*/
 	int num = *reinterpret_cast<int *>(param);
@@ -19,7 +11,7 @@ void *readPostRunner(
 	size_t st = num * static_cast<size_t>(3770);
 	size_t end = st + 3770;
 	/*monitor for feed queues for nodes in the range st to end using pthead_cond_wait*/
-	while (true)
+	for (;;)
 	{
 		// FILE *fname = fopen("sns.log", "a");
 		for (size_t i = st; i < end; i++)
@@ -61,7 +53,8 @@ void *readPostRunner(
 				// 		   "\n";
 				// do as rounak did
 				ostringstream buf;
-				buf << "I read action number " << a.action_id
+				buf << "I (user " << i << ") "
+					<< "read action number " << a.action_id
 					<< " of type " << type
 					<< " posted by user " << a.user_id
 					<< " at time " << get_time(a.timestamp)
@@ -79,7 +72,7 @@ void *readPostRunner(
 				/*opened closed several times,not efficient but atleast need to see live output*/
 				// if a.type is comment then type is "comment" and so on
 			}
-			pthread_mutex_unlock(&(nodes[i].feedQueue_mutex));
+			pthread_mutex_unlock(&nodes[i].feedQueue_mutex);
 		}
 		// fclose(fname);
 	}

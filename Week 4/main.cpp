@@ -1,21 +1,14 @@
-#include <bits/stdc++.h>
-
-#include "Action.hpp"
 #include "Common.hpp"
-#include "Graph.hpp"
-#include "Node.hpp"
-
-using namespace std;
 
 constexpr size_t SIZE{37'700};
 vector<Node> nodes{};
-queue<Action> shared_queue{};
+Queue<Action,25> shared_queue{};
 FILE *fptr = fopen("sns.log", "w");
 
 /*declare a mutex and a condition variable*/
-pthread_mutex_t shared_queue_mutex = PTHREAD_MUTEX_INITIALIZER;
+// pthread_mutex_t shared_queue_mutex = PTHREAD_MUTEX_INITIALIZER;
 // pthread_mutex_t print_mutex = PTHREAD_MUTEX_INITIALIZER;
-pthread_cond_t shared_queue_cond = PTHREAD_COND_INITIALIZER;
+// pthread_cond_t shared_queue_cond = PTHREAD_COND_INITIALIZER;
 
 char *get_time(
 	time_t unix_timestamp)
@@ -72,8 +65,8 @@ int main()
 	nodes.reserve(SIZE);
 	for (size_t i = 0; i < SIZE; ++i)
 	{
-		sort(begin(graph[i]), end(graph[i]));
-		nodes.emplace_back(i, &graph[i]); // Very important to do this before the next step
+		sort(begin(graph[i]), end(graph[i])); // Sort the neighbors for faster search
+		nodes.emplace_back(i, &graph[i]);	  // Create the node and set the neighbors
 	}
 
 	// size_t edges{0};
@@ -96,16 +89,17 @@ int main()
 
 	array<pthread_t, 36> threads{};
 
-	pthread_create(&threads[0], NULL, userSimulatorRunner, &graph);
+	pthread_create(&threads[0], nullptr, userSimulatorRunner, &graph);
 	for (int i = 1; i < 26; i++)
 	{
-		pthread_create(&threads[i], NULL, pushUpdateRunner, &graph);
+		int *num = new int{i - 1};
+		pthread_create(&threads[i], nullptr, pushUpdateRunner, num);
 	}
 
 	for (int i = 26; i < 36; i++)
 	{
 		int *num = new int{i - 26};
-		pthread_create(&threads[i], NULL, readPostRunner, num);
+		pthread_create(&threads[i], nullptr, readPostRunner, num);
 	}
 
 	for (;;)

@@ -1,10 +1,4 @@
-#include <bits/stdc++.h>
-
-#include "Action.hpp"
 #include "Common.hpp"
-#include "Graph.hpp"
-#include "Node.hpp"
-using namespace std;
 
 vector<size_t> get_uniq_rand_set(
 	size_t min,
@@ -37,9 +31,9 @@ void *userSimulatorRunner(void *ptr)
 	Graph<size_t> &graph = *reinterpret_cast<Graph<size_t> *>(ptr);
 	ostringstream buf;
 
-	string type_string[] = {"POST", "COMMENT", "LIKE"};
+	array type_string{"POST", "COMMENT", "LIKE"};
 
-	while (true)
+	for (;;)
 	{
 		// FILE *fptr = fopen("sns.log", "a");
 
@@ -51,7 +45,7 @@ void *userSimulatorRunner(void *ptr)
 			buf << node << " ";
 		}
 		buf << "\n";
-		
+
 		// pthread_mutex_lock(&print_mutex);
 		fwrite(buf.str().c_str(), sizeof(char), buf.str().length(), fptr);
 		fwrite(buf.str().c_str(), sizeof(char), buf.str().length(), stdout);
@@ -64,7 +58,7 @@ void *userSimulatorRunner(void *ptr)
 		{
 			long action_count = lround(log2(graph.getDegree(node) + 1));
 			buf << "User " << node
-				<< " (degree: " << graph.getDegree(node) << ") performs  "
+				<< " (degree: " << graph.getDegree(node) << ") performs "
 				<< action_count << " actions\n";
 
 			// pthread_mutex_lock(&print_mutex);
@@ -80,10 +74,10 @@ void *userSimulatorRunner(void *ptr)
 				Action &&action = nodes[node].genNextAction();
 				/*push to shared queue and pthread_cond_signal that this queue has changed and lock before pushing*/
 				// cerr << action.user_id << endl;
-				pthread_mutex_lock(&shared_queue_mutex);
+				// pthread_mutex_lock(&shared_queue_mutex);
 				shared_queue.push(action);
-				pthread_mutex_unlock(&shared_queue_mutex);
-				pthread_cond_signal(&shared_queue_cond);
+				// pthread_mutex_unlock(&shared_queue_mutex);
+				// pthread_cond_signal(&shared_queue_cond);
 				nodes[node].pushToWall(action);
 				/* push to global queue accessed by pushUpdate : remaining part, discussion needed on the structure of the global queue */
 
@@ -104,6 +98,7 @@ void *userSimulatorRunner(void *ptr)
 
 		// fclose(fptr);
 		// this_thread::sleep_for(chrono::seconds(120));
-		sleep(120);
+		this_thread::sleep_for(chrono::seconds(15));
+		// sleep(120);
 	}
 }
