@@ -33,11 +33,11 @@ void *pushUpdateRunner(void *_num)
 		}
 		else if (action.type == Action::Type::Comment)
 		{
-			type = "Comment";
+			type = "COMMENT";
 		}
 		else if (action.type == Action::Type::Like)
 		{
-			type = "Like";
+			type = "LIKE";
 		}
 
 		/*print the debug messages to terminal and sns.log*/
@@ -58,6 +58,8 @@ void *pushUpdateRunner(void *_num)
 
 		for (auto &&node : *nodes[action.user_id].neighbors)
 		{
+			updates.push(node);
+
 			buf << "Action " + type + ", user_id: " << action.user_id
 				<< ", Neighbour: " << node
 				<< "\n";
