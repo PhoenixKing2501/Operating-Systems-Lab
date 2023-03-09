@@ -2,7 +2,8 @@
 
 constexpr size_t SIZE{37'700};
 vector<Node> nodes{};
-Queue<Action,25> shared_queue{};
+Queue<Action, 25> shared_queue{};
+Queue<size_t, 10> updates{};
 FILE *fptr = fopen("sns.log", "w");
 
 /*declare a mutex and a condition variable*/

@@ -6,23 +6,14 @@ Queue<Action, 25> shared_queue{};
 Queue<size_t, 10> updates{};
 FILE *fptr = fopen("sns.log", "w");
 
-/*declare a mutex and a condition variable*/
-// pthread_mutex_t shared_queue_mutex = PTHREAD_MUTEX_INITIALIZER;
-// pthread_mutex_t print_mutex = PTHREAD_MUTEX_INITIALIZER;
-// pthread_cond_t shared_queue_cond = PTHREAD_COND_INITIALIZER;
-
-char *get_time(
-	time_t unix_timestamp)
+char *get_time(time_t unix_timestamp)
 {
-	// make a dynamic array of 80 characters using new
 	static char time_buf[100]{};
 	struct tm ts = *localtime(&unix_timestamp);
 	strftime(time_buf, sizeof(time_buf), "%a %Y-%m-%d %H:%M:%S %Z", &ts);
 	return time_buf;
 }
-void readGraph(
-	Graph<Node> &graph,
-	const string &filename)
+void readGraph(Graph<Node> &graph, const string &filename)
 {
 	ifstream file{filename};
 	if (not file.is_open())
@@ -70,19 +61,6 @@ int main()
 		nodes.emplace_back(i, &graph[i]);	  // Create the node and set the neighbors
 	}
 
-	// size_t edges{0};
-
-	// for (size_t i = 0; i < SIZE; ++i)
-	// {
-	// 	printf("Node %6zu has %6zu neighbors and capacity %6zu\n",
-	// 		   i,
-	// 		   nodes[i].neighbors->size(),
-	// 		   nodes[i].neighbors->capacity());
-	// 	edges += graph[i].size();
-	// }
-
-	// printf("Total edges: %zu Average degree: %lf\n", edges / 2, (double)edges / 2 / SIZE);
-
 	// Create the threads
 	// create one user thread
 	// 25 pushUpdate threads
@@ -105,15 +83,9 @@ int main()
 
 	for (;;)
 	{
-		this_thread::sleep_for(chrono::seconds(5));
+		// this_thread::sleep_for(chrono::seconds(5));
+		sleep(5);
 		fflush(stdout);
 		fflush(fptr);
 	}
-
-	// Join the threads
-	// for (int i = 0; i < 36; i++)
-	// {
-	// 	pthread_join(threads[i], NULL);
-	// }
-	// pthread_exit(NULL);
 }

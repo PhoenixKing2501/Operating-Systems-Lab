@@ -15,6 +15,7 @@ struct Node;
 extern vector<Node> nodes;
 // extern queue<Action> shared_queue;
 extern Queue<Action, 25> shared_queue;
+extern Queue<size_t, 10> updates;
 // constexpr size_t MAX_QUEUE_SIZE = 100; // Use this to limit the size of the shared queue
 
 /*declare a mutex and a condition variable*/

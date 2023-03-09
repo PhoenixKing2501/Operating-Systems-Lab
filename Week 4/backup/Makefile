@@ -1,16 +1,17 @@
+OBJ     = main.o userSimulator.o pushUpdate.o readPost.o
+HEADERS = Graph.hpp Node.hpp Action.hpp Common.hpp Queue.hpp
+FLAGS   = -std=gnu++20 -lpthread -Wall -fdiagnostics-color -D_GNU_SOURCE -I.
+
 A: main
 
-main: main.o userSimulator.o pushUpdate.o readPost.o Graph.hpp Node.hpp Action.hpp Common.hpp Queue.hpp
-	g++ -o main main.o userSimulator.o pushUpdate.o readPost.o -lpthread -Wall -std=gnu++20 -fdiagnostics-color -D_GNU_SOURCE -I.
+main: $(OBJ) $(HEADERS)
+	g++ -o main $(OBJ) $(FLAGS)
 
-%.o: %.cpp Graph.hpp Node.hpp Action.hpp Common.hpp Queue.hpp
-	g++ -c $< -std=c++20 -lpthread -Wall -std=gnu++20 -fdiagnostics-color -D_GNU_SOURCE -I.
+%.o: %.cpp $(HEADERS)
+	g++ -c $< $(FLAGS)
 
 run: main
-	./main > out.txt
+	./main > out.log
 
 clean:
-	rm main *.o 
-
-clean_all: clean
-	rm sns.log out.txt
+	rm *.log main *.o 

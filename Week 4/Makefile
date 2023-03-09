@@ -1,6 +1,6 @@
 OBJ     = main.o userSimulator.o pushUpdate.o readPost.o
 HEADERS = Graph.hpp Node.hpp Action.hpp Common.hpp Queue.hpp
-FLAGS   = -std=gnu++20 -lpthread -Wall -fdiagnostics-color -D_GNU_SOURCE -I.
+FLAGS   = -std=gnu++20 -pthread -Wall -fdiagnostics-color -D_GNU_SOURCE -I.
 
 A: main
 
@@ -14,4 +14,7 @@ run: main
 	./main > out.log
 
 clean:
-	rm *.log main *.o 
+	rm main *.o 
+
+clean_logs:
+	rm *.log

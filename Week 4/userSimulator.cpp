@@ -5,9 +5,8 @@ vector<size_t> get_uniq_rand_set(
 	size_t max,
 	size_t count)
 {
-	// size_t left = count;
-	size_t range = max - min + 1;
 	static mt19937_64 rng{random_device{}()};
+	size_t range = max - min + 1;
 
 	vector<size_t> posn(range);
 	iota(posn.begin(), posn.end(), min);
@@ -50,10 +49,8 @@ void *userSimulatorRunner(void *ptr)
 		}
 		buf << "\n";
 
-		// pthread_mutex_lock(&print_mutex);
 		fwrite(buf.str().c_str(), sizeof(char), buf.str().length(), fptr);
 		fwrite(buf.str().c_str(), sizeof(char), buf.str().length(), stdout);
-		// pthread_mutex_unlock(&print_mutex);
 
 		buf.str("");
 		buf.clear();
@@ -65,10 +62,8 @@ void *userSimulatorRunner(void *ptr)
 				<< " (degree: " << graph.getDegree(node) << ") performs "
 				<< action_count << " actions\n";
 
-			// pthread_mutex_lock(&print_mutex);
 			fwrite(buf.str().c_str(), sizeof(char), buf.str().length(), fptr);
 			fwrite(buf.str().c_str(), sizeof(char), buf.str().length(), stdout);
-			// pthread_mutex_unlock(&print_mutex);
 
 			buf.str("");
 			buf.clear();
@@ -76,33 +71,26 @@ void *userSimulatorRunner(void *ptr)
 			for (long i = 0; i < action_count; ++i)
 			{
 				Action &&action = nodes[node].genNextAction();
-				/*push to shared queue and pthread_cond_signal that this queue has changed and lock before pushing*/
-				// cerr << action.user_id << endl;
-				// pthread_mutex_lock(&shared_queue_mutex);
+				/* push to shared queue and pthread_cond_signal that
+				 * this queue has changed and lock before pushing
+				 */
 				shared_queue.push(action);
-				// pthread_mutex_unlock(&shared_queue_mutex);
-				// pthread_cond_signal(&shared_queue_cond);
 				nodes[node].pushToWall(action);
-				/* push to global queue accessed by pushUpdate : remaining part, discussion needed on the structure of the global queue */
 
 				buf << "User " << node
 					<< " performs " << type_string[static_cast<int>(action.type)]
 					<< " no. " << action.action_id
 					<< "\n";
 
-				// pthread_mutex_lock(&print_mutex);
 				fwrite(buf.str().c_str(), sizeof(char), buf.str().length(), fptr);
 				fwrite(buf.str().c_str(), sizeof(char), buf.str().length(), stdout);
-				// pthread_mutex_unlock(&print_mutex);
 
 				buf.str("");
 				buf.clear();
 			}
 		}
 
-		// fclose(fptr);
-		this_thread::sleep_for(chrono::seconds(120));
-		// this_thread::sleep_for(chrono::seconds(1));
-		// sleep(120);
+		// this_thread::sleep_for(chrono::seconds(120));
+		sleep(120);
 	}
 }

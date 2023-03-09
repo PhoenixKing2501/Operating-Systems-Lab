@@ -12,14 +12,17 @@ struct Queue
 {
 	array<queue<T, list<T>>, N> queues{};
 	array<pthread_mutex_t, N> mutexes{};
+	array<pthread_cond_t, N> conditionals{};
 	pthread_mutex_t push_mutex = PTHREAD_MUTEX_INITIALIZER;
 	static size_t counter;
 
-	Queue()
-		: queues{}, mutexes{}
+	Queue() : queues{}, mutexes{}
 	{
-		for (auto &mutex : this->mutexes)
+		for (auto &mutex : mutexes)
 			mutex = PTHREAD_MUTEX_INITIALIZER;
+
+		for (auto &conditional : conditionals)
+			conditional = PTHREAD_COND_INITIALIZER;
 	}
 	Queue(const Queue &) = delete;
 	Queue(Queue &&) = delete;
@@ -34,34 +37,22 @@ struct Queue
 		pthread_mutex_unlock(&push_mutex);
 
 		pthread_mutex_lock(&mutexes[index]);
-		this->queues[index].push(value);
+		queues[index].push(value);
 		pthread_mutex_unlock(&mutexes[index]);
+		pthread_cond_signal(&conditionals[index]);
 	}
 
-	void push(T &&value)
+	T pop(size_t index)
 	{
-		pthread_mutex_lock(&push_mutex);
-		size_t index = counter++ % N;
-		pthread_mutex_unlock(&push_mutex);
-
 		pthread_mutex_lock(&mutexes[index]);
-		this->queues[index].push(move(value));
-		pthread_mutex_unlock(&mutexes[index]);
-	}
-
-	optional<T> pop(size_t index)
-	{
-		if (index >= N)
-			return nullopt;
-		pthread_mutex_lock(&this->mutexes[index]);
-		if (this->queues[index].empty())
+		while (queues[index].empty())
 		{
-			pthread_mutex_unlock(&this->mutexes[index]);
-			return nullopt;
+			pthread_cond_wait(&conditionals[index], &mutexes[index]);
 		}
-		T value = this->queues[index].front();
-		this->queues[index].pop();
-		pthread_mutex_unlock(&this->mutexes[index]);
+
+		T value = queues[index].front();
+		queues[index].pop();
+		pthread_mutex_unlock(&mutexes[index]);
 		return value;
 	}
 };

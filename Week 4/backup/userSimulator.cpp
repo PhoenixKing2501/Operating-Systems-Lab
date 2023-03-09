@@ -33,9 +33,13 @@ void *userSimulatorRunner(void *ptr)
 
 	array type_string{"POST", "COMMENT", "LIKE"};
 
+	size_t counter{};
+
 	for (;;)
 	{
 		// FILE *fptr = fopen("sns.log", "a");
+
+		cerr << "User Simulator Iter: " << (++counter) << endl;
 
 		vector<size_t> &&active_nodes = get_uniq_rand_set(0, graph.getSize() - 1, 100);
 
@@ -97,8 +101,8 @@ void *userSimulatorRunner(void *ptr)
 		}
 
 		// fclose(fptr);
-		// this_thread::sleep_for(chrono::seconds(120));
-		this_thread::sleep_for(chrono::seconds(15));
+		this_thread::sleep_for(chrono::seconds(120));
+		// this_thread::sleep_for(chrono::seconds(1));
 		// sleep(120);
 	}
 }

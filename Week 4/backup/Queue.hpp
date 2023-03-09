@@ -18,7 +18,7 @@ struct Queue
 	Queue()
 		: queues{}, mutexes{}
 	{
-		for (auto &mutex : mutexes)
+		for (auto &mutex : this->mutexes)
 			mutex = PTHREAD_MUTEX_INITIALIZER;
 	}
 	Queue(const Queue &) = delete;
@@ -34,7 +34,7 @@ struct Queue
 		pthread_mutex_unlock(&push_mutex);
 
 		pthread_mutex_lock(&mutexes[index]);
-		queues[index].push(value);
+		this->queues[index].push(value);
 		pthread_mutex_unlock(&mutexes[index]);
 	}
 
@@ -45,7 +45,7 @@ struct Queue
 		pthread_mutex_unlock(&push_mutex);
 
 		pthread_mutex_lock(&mutexes[index]);
-		queues[index].push(move(value));
+		this->queues[index].push(move(value));
 		pthread_mutex_unlock(&mutexes[index]);
 	}
 
@@ -53,15 +53,15 @@ struct Queue
 	{
 		if (index >= N)
 			return nullopt;
-		pthread_mutex_lock(&mutexes[index]);
-		if (queues[index].empty())
+		pthread_mutex_lock(&this->mutexes[index]);
+		if (this->queues[index].empty())
 		{
-			pthread_mutex_unlock(&mutexes[index]);
+			pthread_mutex_unlock(&this->mutexes[index]);
 			return nullopt;
 		}
-		T value = queues[index].front();
-		queues[index].pop();
-		pthread_mutex_unlock(&mutexes[index]);
+		T value = this->queues[index].front();
+		this->queues[index].pop();
+		pthread_mutex_unlock(&this->mutexes[index]);
 		return value;
 	}
 };

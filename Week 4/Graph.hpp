@@ -22,35 +22,35 @@ struct Graph
 	~Graph() = default;
 	void addEdge(size_t node1, size_t node2)
 	{
-		this->adjList[node1].push_back(node2);
-		this->adjList[node2].push_back(node1);
+		adjList[node1].push_back(node2);
+		adjList[node2].push_back(node1);
 	}
 	void shrinkToFit()
 	{
-		ranges::for_each(this->adjList,
+		ranges::for_each(adjList,
 						 [](auto &v)
 						 { v.shrink_to_fit(); });
 	}
 
 	// Get the neighbors of a node
-	vector<size_t> &operator[](size_t index) { return this->adjList[index]; }
-	const vector<size_t> &operator[](size_t index) const { return this->adjList[index]; }
+	vector<size_t> &operator[](size_t index) { return adjList[index]; }
+	const vector<size_t> &operator[](size_t index) const { return adjList[index]; }
 
 	// Get the size of the graph
-	size_t getSize() const { return this->size; }
+	size_t getSize() const { return size; }
 
 	// Get the adjacency list
-	const vector<vector<size_t>> &getAdjList() const { return this->adjList; }
+	const vector<vector<size_t>> &getAdjList() const { return adjList; }
 
 	// Get the degree of a node
 	size_t getDegree(size_t i) const
 	{
-		if (i >= this->size)
+		if (i >= size)
 		{
 			throw std::out_of_range("Index out of range");
 		}
 
-		return this->adjList[i].size();
+		return adjList[i].size();
 	}
 };
 
