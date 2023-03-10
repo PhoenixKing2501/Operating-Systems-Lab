@@ -10,7 +10,7 @@ using namespace std;
 template <typename T, size_t N>
 struct Queue
 {
-	array<queue<T, list<T>>, N> queues{};
+	array<queue<T>, N> queues{};
 	array<pthread_mutex_t, N> mutexes{};
 	array<pthread_cond_t, N> conditionals{};
 	pthread_mutex_t push_mutex = PTHREAD_MUTEX_INITIALIZER;
