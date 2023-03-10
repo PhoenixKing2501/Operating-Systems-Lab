@@ -32,4 +32,16 @@ Queue:
 			Pop takes an argument to specify which queue to pop from. Again the queue is guarded by `mutexes[index]`, and is waited for at `conditional[index]`.
 
 sns.cpp (Main Thread):
-	1. Reads and loads the graph to memory. Every adjacency list is sorted since `std::set_intersection()` needs to be called later.
+	1. Reads and loads the graph to memory. Every adjacency list is sorted since `std::set_intersection()` needs to be called later for assigning priority in `feedQueue` of `Node`s.
+	2. Spawns 36 threads (1 for `userSimulator`, 25 for `pushUpdate`, 10 for `readPost`).
+
+userSimulator.cpp (User Simulator Thread):
+	Wakes up every 120s and generates random `Action`s proportional to the `Node`'s degree for 100 random `Node`s, pushing every of them to `shared_queue`.
+
+pushUpdate.cpp (Push Update Thread):
+	Pops from `shared_queue` the next `Action` to handle and 
+		1. Updates `feedQueue` of all `Node`s who are the neighbours of the `Node` which generated the action.
+		2. Pushes the affected nodes to `updates`. (Note a `Node` maybe pushed into `updates` multiple times. This is not an issue as explained later.)
+
+readPost.cpp (Read Post Thread):
+	
