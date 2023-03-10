@@ -57,9 +57,7 @@ struct Node
 	size_t past_actions[3]{};
 	vector<size_t> *neighbors{nullptr};
 
-	/*include parameters like feedQueue_mutex and feedQueue_cond*/
 	pthread_mutex_t feedQueue_mutex;
-	// pthread_cond_t feedQueue_cond;
 	Node() = default;
 	Node(size_t id, vector<size_t> *nebr)
 		: id(id), past_actions{}, neighbors{nebr}
@@ -68,7 +66,6 @@ struct Node
 		static uniform_int_distribution<int> dist{0, 1};
 		this->sort_order = static_cast<Type>(dist(rng));
 		this->feedQueue_mutex = PTHREAD_MUTEX_INITIALIZER;
-		// this->feedQueue_cond = PTHREAD_COND_INITIALIZER;
 	}
 
 	Node(const Node &other) = default;
