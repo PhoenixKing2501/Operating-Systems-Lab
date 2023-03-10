@@ -55,8 +55,7 @@ Justification of locks, and other Data Structures:
 
 
 Some Estimates:
-	We did some analytics on the Graph and found out these results:
+	We did some analysis on the Graph and found out these results:
 		Max size of `feedQueue` ~= 11k
 		Avg size of `feedQueue` ~= 4.5k
 		Max size of `shared_queue` ~= 11k
-	
