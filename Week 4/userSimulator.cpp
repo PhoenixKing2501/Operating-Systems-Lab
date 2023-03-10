@@ -57,7 +57,7 @@ void *userSimulatorRunner(void *ptr)
 
 		for (auto &node : active_nodes)
 		{
-			long action_count = lround(log2(graph.getDegree(node) + 1));
+			long action_count = 10 * lround(log2(graph.getDegree(node) + 1));
 			buf << "User " << node
 				<< " (degree: " << graph.getDegree(node) << ") performs "
 				<< action_count << " actions\n";
