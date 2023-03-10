@@ -1,0 +1,31 @@
+Operating Systems Lab
+Assignment 4 Design Doc
+By Group 4
+
+Graph:
+	The average number of nodes in graph given = 289003 / 37700 ~= 8
+	
+	It isn't efficient to store an adjacency matrix for it. So the graph in stored as an adjacency list.
+	
+	`vector::shrink_to_fit()` has been called after loading the graph to get rid of extra unused memory.
+
+Node:
+	Since the average degree is not high, it's not efficient to store priority for all other nodes. So for when `feedQueue` is to be sorted by no. of common nodes, we simply calculated the respective priority at runtime.
+
+	`vector<Nodes>` is the list of all nodes. It is used to quickly reference any node, without accessing the graph everytime.
+
+	Each node stores a `wallQueue`, a `feedQueue`, a counter of `past_action`s, a pointer to its list of `neighbours`, and `mutex` for `feedQueue`.
+
+Action:
+	Nothing special. Simply stores `action_id`, `user_id` of the user who generated the action, `type` of action, `timestamp` of action generation
+
+Queue:
+	A special multi-queue data structure created by us to streamline the efficiency of the threads.
+
+	Contains N `std::queue`s, a `mutex` and a `conditional variable` for each, a counter, a `mutex` for pushing to the queue.
+
+	Workflow:
+		Push:
+			Elements are push in a round robin manner to the queue
+
+
