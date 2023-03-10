@@ -31,4 +31,5 @@ Queue:
 		Pop:
 			Pop takes an argument to specify which queue to pop from. Again the queue is guarded by `mutexes[index]`, and is waited for at `conditional[index]`.
 
-
+sns.cpp (Main Thread):
+	1. Reads and loads the graph to memory. Every adjacency list is sorted since `std::set_intersection()` needs to be called later.
