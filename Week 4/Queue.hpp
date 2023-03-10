@@ -42,6 +42,18 @@ struct Queue
 		pthread_cond_signal(&conditionals[index]);
 	}
 
+	void push(T &&value)
+	{
+		pthread_mutex_lock(&push_mutex);
+		size_t index = counter++ % N;
+		pthread_mutex_unlock(&push_mutex);
+
+		pthread_mutex_lock(&mutexes[index]);
+		queues[index].push(move(value));
+		pthread_mutex_unlock(&mutexes[index]);
+		pthread_cond_signal(&conditionals[index]);
+	}
+
 	T pop(size_t index)
 	{
 		pthread_mutex_lock(&mutexes[index]);

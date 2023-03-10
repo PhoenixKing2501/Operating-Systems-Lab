@@ -83,7 +83,6 @@ int main()
 
 	for (;;)
 	{
-		// this_thread::sleep_for(chrono::seconds(5));
 		sleep(5);
 		fflush(stdout);
 		fflush(fptr);

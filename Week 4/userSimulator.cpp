@@ -36,8 +36,6 @@ void *userSimulatorRunner(void *ptr)
 
 	for (;;)
 	{
-		// FILE *fptr = fopen("sns.log", "a");
-
 		cerr << "User Simulator Iter: " << (++counter) << endl;
 
 		vector<size_t> &&active_nodes = get_uniq_rand_set(0, graph.getSize() - 1, 100);
@@ -71,9 +69,7 @@ void *userSimulatorRunner(void *ptr)
 			for (long i = 0; i < action_count; ++i)
 			{
 				Action &&action = nodes[node].genNextAction();
-				/* push to shared queue and pthread_cond_signal that
-				 * this queue has changed and lock before pushing
-				 */
+				
 				shared_queue.push(action);
 				nodes[node].pushToWall(action);
 
@@ -90,7 +86,6 @@ void *userSimulatorRunner(void *ptr)
 			}
 		}
 
-		// this_thread::sleep_for(chrono::seconds(120));
 		sleep(120);
 	}
 }

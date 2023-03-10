@@ -4,8 +4,6 @@
  * pusing updates to feed queue of neighbours of node
  */
 
-/*parameter for this thread is graph*/
-
 void *pushUpdateRunner(void *_num)
 {
 	int num = *reinterpret_cast<int *>(_num);
@@ -28,9 +26,6 @@ void *pushUpdateRunner(void *_num)
 		{
 			type = "LIKE";
 		}
-
-		/*print the debug messages to terminal and sns.log*/
-		/*convert timestamp to readable format*/
 
 		buf << "Pushing update of " << action.user_id
 			<< " with action id " << action.action_id

@@ -12,12 +12,11 @@ void *readPostRunner(void *param)
 	int num = *reinterpret_cast<int *>(param);
 	delete reinterpret_cast<int *>(param);
 
-	/*monitor for feed queues for nodes in the range st to end using pthead_cond_wait*/
 	for (;;)
 	{
 		auto &node = nodes[updates.pop(num)];
 
-		/*print the feed queue in order*/
+		/*read the feed queue in order*/
 		pthread_mutex_lock(&node.feedQueue_mutex);
 		while (not node.feedQueue.empty())
 		{
