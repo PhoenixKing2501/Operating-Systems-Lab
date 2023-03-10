@@ -26,6 +26,9 @@ Queue:
 
 	Workflow:
 		Push:
-			Elements are push in a round robin manner to the queue
+			Elements are pushed in a round robin manner to the queue. Counter is incremented to check to which queue the element should be inserted. `push_mutex` guards the counter. `mutexes[index]` guards the queue where insertion happens. The `conditional[index]` is signalled after an insertion happens.
+		
+		Pop:
+			Pop takes an argument to specify which queue to pop from. Again the queue is guarded by `mutexes[index]`, and is waited for at `conditional[index]`.
 
 
