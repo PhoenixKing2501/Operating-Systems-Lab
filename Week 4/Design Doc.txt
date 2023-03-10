@@ -24,12 +24,10 @@ Queue:
 
 	Contains N `std::queue`s, a `mutex` and a `conditional variable` for each, a counter, a `mutex` for pushing to the queue.
 
-	Workflow:
-		Push:
-			Elements are pushed in a round robin manner to the queue. Counter is incremented to check to which queue the element should be inserted. `push_mutex` guards the counter. `mutexes[index]` guards the queue where insertion happens. The `conditional[index]` is signalled after an insertion happens.
-		
-		Pop:
-			Pop takes an argument to specify which queue to pop from. Again the queue is guarded by `mutexes[index]`, and is waited for at `conditional[index]`.
+	An N-way queue provides the usual queue functionalities of push and pop but is internally implemented as N independent standard FIFO queues.
+	The `Queue` maintains a counter referring to the index of the underlying queue to which an element is to be added when the next push call is made, the push function does not provide the control of choosing the index explicitly to the user. The counter is incremented in a round robin fashion, which means the immediate numeric successor (mod N) is selected for insertion for the next push call. 
+	The pop function gives control over the index of the internal queue to pop from and takes the same as a function parameter.
+	The locking mechanism to maintain synchronisation across multiple threads/processes accessing the multiway queue is handled internally inside the push and pop functions, a user thread/process need not bother about locking/unlocking while accessing the queue. The counter is guarded by push_mutex and each of the internal queues is guarded by a different mutex lock, the only contenders for access being reader(pop) and writer(push) processes, there is no contention for accessing queues with different indexes.
 
 sns.cpp (Main Thread):
 	1. Reads and loads the graph to memory. Every adjacency list is sorted since `std::set_intersection()` needs to be called later for assigning priority in `feedQueue` of `Node`s.
@@ -39,9 +37,16 @@ userSimulator.cpp (User Simulator Thread):
 	Wakes up every 120s and generates random `Action`s proportional to the `Node`'s degree for 100 random `Node`s, pushing every of them to `shared_queue`.
 
 pushUpdate.cpp (Push Update Thread):
-	Pops from `shared_queue` the next `Action` to handle and 
+	Pops from `shared_queue` the next `Action` to handle, and 
 		1. Updates `feedQueue` of all `Node`s who are the neighbours of the `Node` which generated the action.
 		2. Pushes the affected nodes to `updates`. (Note a `Node` maybe pushed into `updates` multiple times. This is not an issue as explained later.)
 
 readPost.cpp (Read Post Thread):
-	
+	Pops from `updates` next `Node` to service, and reads its full `feedQueue`.
+
+Justification of locks, and other Data Structures:
+	Main thread creates two special `Queue`s, `shared_queue` and `updates`.
+	In those cases, where a single queue is being serviced by multiple threads, little parallelism is achieved if there is only one point of entry/exit from the queue. To streamline the access, we make multiple access points in the queue which are independently served by different threads, there is no access contention between different queues and hence the threads don't block each other for access. Thus it makes sense to have as many access points (internal queues) as there are threads (fewer access points would lead to redundant threads and more access points would lead to redundancy of access points).
+	The `shared_queue` (into which userSimulator enters actions and pushUpdate reads from) is implemented as a 25-way queue as there are 25 pushUpdate threads reading from it. This also facilitates user convenience in the following sense:
+	For a normal shared queue, consider the case of very popular users who, according to our design, perform more actions. When one such user A performs a bulk of actions, they get lined up to be serviced from the service queue. From the point the first action of this thread is serviced by a pushUpdate thread, all the other pushUpdate threads would service keep serving actions from user A only untill all its actions are not popped (note that there is a single userSimulator thread and hence actions of user A appear in a row in the queue without actions from anyone else appearing between them). This problem is solved on using a multiway queue.
+	A similar problem arises for readUpdate
