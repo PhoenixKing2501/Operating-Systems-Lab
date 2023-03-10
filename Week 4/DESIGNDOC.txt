@@ -1,6 +1,10 @@
 Operating Systems Lab
 Assignment 4 Design Doc
 By Group 4
+Utsav Basu (20CS30057)
+Anamitra Mukhopadhyay (20CS30064)
+Rounak Saha (20CS30043)
+Swarup Padhi (20CS30062)
 
 Graph:
 	The average number of neighbours of each `Node` in graph given = 289003 / 37700 ~= 8
@@ -51,5 +55,8 @@ Justification of locks, and other Data Structures:
 
 
 Some Estimates:
-	Avg size of `feedQueue`: 
+	We did some analytics on the Graph and found out these results:
+		Max size of `feedQueue` ~= 11k
+		Avg size of `feedQueue` ~= 4.5k
+		Max size of `shared_queue` ~= 11k
 	
