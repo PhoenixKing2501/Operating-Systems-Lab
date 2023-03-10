@@ -3,17 +3,13 @@ Assignment 4 Design Doc
 By Group 4
 
 Graph:
-	The average number of nodes in graph given = 289003 / 37700 ~= 8
-	
+	The average number of neighbours of each node in graph given = 289003 / 37700 ~= 8
 	It isn't efficient to store an adjacency matrix for it. So the graph in stored as an adjacency list.
-	
 	`vector::shrink_to_fit()` has been called after loading the graph to get rid of extra unused memory.
 
 Node:
 	Since the average degree is not high, it's not efficient to store priority for all other nodes. So for when `feedQueue` is to be sorted by no. of common nodes, we simply calculated the respective priority at runtime.
-
 	`vector<Nodes>` is the list of all nodes. It is used to quickly reference any node, without accessing the graph everytime.
-
 	Each node stores a `wallQueue`, a `feedQueue`, a counter of `past_action`s, a pointer to its list of `neighbours`, and `mutex` for `feedQueue`.
 
 Action:
@@ -49,4 +45,9 @@ Justification of locks, and other Data Structures:
 	In those cases, where a single queue is being serviced by multiple threads, little parallelism is achieved if there is only one point of entry/exit from the queue. To streamline the access, we make multiple access points in the queue which are independently served by different threads, there is no access contention between different queues and hence the threads don't block each other for access. Thus it makes sense to have as many access points (internal queues) as there are threads (fewer access points would lead to redundant threads and more access points would lead to redundancy of access points).
 	The `shared_queue` (into which userSimulator enters actions and `pushUpdate` reads from) is implemented as a 25-way queue as there are 25 `pushUpdate` threads reading from it. This also facilitates user convenience in the following sense:
 	For a normal shared queue, consider the case of very popular users who, according to our design, perform more actions. When one such user A performs a bulk of actions, they get lined up to be serviced from the service queue. From the point the first action of this thread is serviced by a `pushUpdate` thread, all the other `pushUpdate` threads would service keep serving actions from user A only untill all its actions are not popped (note that there is a single userSimulator thread and hence actions of user A appear in a row in the queue without actions from anyone else appearing between them). This problem is solved on using a multiway queue.
-	A similar problem arises for `readPost`. We need to tell the `readPost` threads which `Node`s' `feedQueue` to read from the `pushUpdate` threads. Again, a 10-way queue helps in this case. We insert the updated `Node`s' indexes to the `updates` queue in a round-robin manner from `pushUpdate` threads. `readPost` threads now pop from their respective queue and service each node. It might arise sometimes that the same node is pushed 
+	A similar problem arises for `readPost`. We need to tell the `readPost` threads which `Node`s' `feedQueue` to read from the `pushUpdate` threads. Again, a 10-way queue helps in this case. We insert the updated `Node`s' indexes to the `updates` queue in a round-robin manner from `pushUpdate` threads. `readPost` threads now pop from their respective queue and service each node. It might arise sometimes that the same node is pushed multiple times. However, even in that case, since we are checking if the `Node`'s `feedQueue` is empty or not, there's no problem. If same node is encountered again then it is simply ignored, if its `feedQueue` empty.
+
+
+Some Estimates:
+	Avg size of `feedQueue`: 
+	
