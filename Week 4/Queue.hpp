@@ -14,9 +14,9 @@ struct Queue
 	array<pthread_mutex_t, N> mutexes{};
 	array<pthread_cond_t, N> conditionals{};
 	pthread_mutex_t push_mutex = PTHREAD_MUTEX_INITIALIZER;
-	static size_t counter;
+	size_t counter;
 
-	Queue() : queues{}, mutexes{}
+	Queue() : queues{}, counter{0}
 	{
 		for (auto &mutex : mutexes)
 			mutex = PTHREAD_MUTEX_INITIALIZER;
@@ -56,8 +56,5 @@ struct Queue
 		return value;
 	}
 };
-
-template <typename T, size_t N>
-size_t Queue<T, N>::counter = 0;
 
 #endif // _QUEUE_HPP_
