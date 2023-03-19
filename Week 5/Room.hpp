@@ -10,8 +10,8 @@ struct Room
 	int32_t occupancy{};
 	int32_t totalTime{};
 
-	pthread_t guest{};
-	int32_t guestPriority{};
+	pthread_t guest{-1};
+	int32_t guestPriority{-1};
 
 	pthread_mutex_t roomMutex;
 
@@ -44,6 +44,12 @@ struct Room
 
 		pthread_mutex_unlock(&roomMutex);
 		return true;
+	}
+	void updateTotalTime(int32_t time)
+	{
+		pthread_mutex_lock(&roomMutex);
+		totalTime += time;
+		pthread_mutex_unlock(&roomMutex);
 	}
 };
 
