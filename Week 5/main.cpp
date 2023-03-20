@@ -26,7 +26,7 @@ int main(int argc, char const *argv[])
 
 	if (argc != 4)
 	{
-		cerr << "Usage: " << argv[0] << " <numGuests> <numCleaners> <numRooms>" << endl;
+		cerr << "Usage: " << argv[0] << "<numCleaners> <numGuests> <numRooms>" << endl;
 		return EXIT_FAILURE;
 	}
 
@@ -54,6 +54,7 @@ int main(int argc, char const *argv[])
 	/*initialise guest mutex and cond*/
 	guest_mutex.resize(numGuests);
 	guest_cond.resize(numGuests);
+
 	for (int32_t i = 0; i < numGuests; i++)
 	{
 		pthread_mutex_init(&guest_mutex[i], NULL);
@@ -66,4 +67,11 @@ int main(int argc, char const *argv[])
 	{
 		pthread_create(&guests[i], NULL, guestThread, NULL);
 	}
+
+	// join the threads here
+	for (int32_t i = 0; i < numGuests; i++)
+	{
+		pthread_join(guests[i], NULL);
+	}
 }
+

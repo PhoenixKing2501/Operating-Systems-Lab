@@ -26,6 +26,11 @@ struct Hotel
 
 	~Hotel()
 	{
+		// join all cleaners
+		for (size_t i = 0; i < cleaners.size(); i++)
+		{
+			pthread_join(cleaners[i], NULL);
+		}
 		sem_destroy(&requestLeft);
 	}
 
@@ -41,7 +46,8 @@ struct Hotel
 
 		return false;
 	}
-	void updateTotalTime(int32_t gid, int32_t time)
+	// can speed up both these functions
+	void updateTotalTime(pthread_t gid, int32_t time)
 	{
 		for (size_t i = 0; i < rooms.size(); i++)
 		{
@@ -53,11 +59,11 @@ struct Hotel
 			}
 		}
 	}
-	bool checkGuestInHotel(int32_t id)
+	bool checkGuestInHotel(pthread_t gid)
 	{
 		for (size_t i = 0; i < rooms.size(); i++)
 		{
-			if (rooms[i].guest == id)
+			if (rooms[i].guest == gid)
 			{
 				return true;
 			}

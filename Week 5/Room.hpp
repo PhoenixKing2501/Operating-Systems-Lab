@@ -10,7 +10,7 @@ struct Room
 	int32_t occupancy{};
 	int32_t totalTime{};
 
-	pthread_t guest{-1};
+	pthread_t guest{};
 	int32_t guestPriority{-1};
 
 	pthread_mutex_t roomMutex;
@@ -38,11 +38,23 @@ struct Room
 			return false;
 		}
 
+		pthread_t tmp = this->guest;
 		this->guest = guest;
 		guestPriority = priority;
 		occupancy++;
-
 		pthread_mutex_unlock(&roomMutex);
+		// signal the previous thread
+		pthread_cond_signal(&guest_cond[tmp]);
+
+		cout << "Guest " << this->guest << "  was alloted ";
+		if (tmp != 0)
+		{
+			cout << "a room replacing Guest " << tmp << "\n";
+		}
+		else
+		{
+			cout << "a clean room\n";
+		}
 		return true;
 	}
 	void updateTotalTime(int32_t time)

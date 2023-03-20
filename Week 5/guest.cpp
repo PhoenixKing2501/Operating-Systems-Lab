@@ -8,6 +8,7 @@ void *guestThread(void *arg)
 		sleep(rand() % 10 + 10); /*sleep for a random time between 10 and 20 seconds*/
 		/*try to occupy a room*/
 		int ret = sem_trywait(&hotel->requestLeft);
+		cout << "Guest " << id << "  requested a room\n";
 		if (ret == -1)
 		{
 			if (errno == EAGAIN)
@@ -26,6 +27,7 @@ void *guestThread(void *arg)
 		if (not hotel->allotRoom(id, pr_guests[0]))
 		{
 			/*allotment failed,now released */
+			cout << "Guest " << id << "  could not be alloted a room\n";
 			sem_post(&hotel->requestLeft);
 			continue;
 		}
@@ -37,26 +39,27 @@ void *guestThread(void *arg)
 		clock_gettime(CLOCK_REALTIME, &ts);
 		ts.tv_sec += sleep_time;
 
-		int ret; // to monitor the value returned by pthread_cond_timedwait
+		
 		pthread_mutex_lock(&guest_mutex[id]);
-		do
+		while (hotel->checkGuestInHotel(id)) // to guard against spurious wakeups
 		{
-			/*Wait*/
+			/*sleep and wait*/
 			ret = pthread_cond_timedwait(&guest_cond[id], &guest_mutex[id], &ts);
+		}
 
-		} while (hotel->checkGuestInHotel(id)); // to guard against spurious wakeups
 		pthread_mutex_unlock(&guest_mutex[id]);
 
 		if (ret == -1 && errno == ETIMEDOUT)
 		{
 			// guest successfully slept for sleep_time seconds
-
+			cout << "Guest " << id << " successfully completed it's stay\n";
 			hotel->updateTotalTime(id, sleep_time);
 		}
 		else
 		{
 			// guest was kicked out by another guest
 			// update time by the time he slept
+			cout << "Guest " << id << "  was kicked out by another guest\n";
 			hotel->updateTotalTime(id, sleep_time - (ts.tv_sec - time(NULL)));
 		}
 	}
