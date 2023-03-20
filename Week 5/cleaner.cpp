@@ -2,14 +2,15 @@
 
 void *cleanerThread(void *arg)
 {
-	auto id = *((size_t *)arg);
+	auto id = *reinterpret_cast<int32_t *>(arg);
+	delete reinterpret_cast<int32_t *>(arg);
 
-	delete (size_t *)arg;
-	int sval = -1;
+	int sval{};
 
 	while (true)
 	{
-		cout << "Cleaner " << id << " waiting for all rooms to be cleaned\n";
+		// cout << "Cleaner " << id << " waiting for all rooms to be cleaned\n";
+		printf("Cleaner %d waiting for all rooms to be cleaned\n", id);
 		pthread_mutex_lock(&hotel->cleaner_mutex);
 		sem_getvalue(&hotel->requestLeft, &sval);
 
@@ -20,7 +21,8 @@ void *cleanerThread(void *arg)
 		}
 
 		pthread_mutex_unlock(&hotel->cleaner_mutex);
-		cout << "Cleaner " << id << " started cleaning\n";
+		// cout << "Cleaner " << id << " started cleaning\n";
+		printf("Cleaner %d started cleaning\n", id);
 		// now start cleaning
 
 		int32_t st = ((numRooms / numCleaners) * id);
@@ -31,26 +33,30 @@ void *cleanerThread(void *arg)
 
 		for (int i = st; i < end; i++)
 		{
-			int x = rand() % 10; // sleep for a time occupied by previous occupants multiplied by x
-			sleep(hotel->rooms[i].totalTime * x);
+			// int x = rand() % 10; // sleep for a time occupied by previous occupants multiplied by x
+			sleep(hotel->rooms[i].totalTime);
 			/*acquire a lock and update room detail and increment counter*/
 			/*every cleaner can have a mutex here to achieve higher parallelism*/
-			cout << "Cleaner " << id << " cleaned room " << i + 1 << "\n";
+			// cout << "Cleaner " << id << " cleaned room " << i + 1 << "\n";
+			printf("Cleaner %d cleaned room %d\n", id, i + 1);
 
-			pthread_mutex_lock(&hotel->cleaner_mutex);
 			hotel->rooms[i].occupancy = 0;
-			hotel->rooms[i].guest = 0;
+			hotel->rooms[i].guest = -1;
 			hotel->rooms[i].guestPriority = -1;
+			hotel->rooms[i].totalTime = 0;
+			
+			pthread_mutex_lock(&hotel->cleaner_mutex);
 			cleaner_ctr++;
-
 			pthread_mutex_unlock(&hotel->cleaner_mutex);
+
 		}
 
 		// acquire lock again and check if all rooms are cleaned by cleaner_ctr
 		pthread_mutex_lock(&hotel->cleaner_mutex);
 		if (cleaner_ctr == numRooms * ROOM_SIZE)
 		{
-			cout << "Cleaners finished cleaning\n";
+			// cout << "Cleaners finished cleaning\n";
+			printf("Cleaners finished cleaning\n");
 			// all rooms are cleaned
 			// signal all guests by increasing semaphore value
 			for (int i = 0; i < numRooms * ROOM_SIZE; i++)

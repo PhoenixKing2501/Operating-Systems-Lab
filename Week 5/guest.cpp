@@ -2,16 +2,21 @@
 
 void *guestThread(void *arg)
 {
-	auto id = *((int32_t *)arg);
-	delete (int32_t *)arg;
-	cout << "In guestThread " << id << "\n";
+	auto id = *static_cast<int32_t *>(arg);
+	delete static_cast<int32_t *>(arg);
+
+	// cout << "In guestThread " << id << "\n";
+	printf("In guestThread %d\n", id);
 	while (true)
 	{
 		sleep(rand() % REQTIME + 5); /*sleep for a random time between 10 and 20 seconds*/
-		cout << "Guest " << id << "  woke up\n";
+		// cout << "Guest " << id << " woke up\n";
+		printf("Guest %d woke up\n", id);
 		/*try to occupy a room*/
 		int ret = sem_trywait(&hotel->requestLeft);
-		cout << "Guest " << id << "  requested a room\n";
+		// cout << "Guest " << id << " requested a room\n";
+		printf("Guest %d requested a room\n", id);
+
 		if (ret == -1)
 		{
 			if (errno == EAGAIN)
@@ -30,7 +35,8 @@ void *guestThread(void *arg)
 		if (not hotel->allotRoom(id, pr_guests[id]))
 		{
 			/*allotment failed,now released */
-			cout << "Guest " << id << "  could not be alloted a room\n";
+			// cout << "Guest " << id << " could not be alloted a room\n";
+			printf("Guest %d could not be alloted a room\n", id);
 			sem_post(&hotel->requestLeft);
 			continue;
 		}
@@ -42,7 +48,8 @@ void *guestThread(void *arg)
 		clock_gettime(CLOCK_REALTIME, &ts);
 		ts.tv_sec += sleep_time;
 
-		cout << "Guest " << id << "  is starting to sleep\n";
+		// cout << "Guest " << id << " is starting to sleep\n";
+		printf("Guest %d is starting to sleep\n", id);
 		pthread_mutex_lock(&guest_mutex[id]);
 		while (hotel->checkGuestInHotel(id)) // to guard against spurious wakeups
 		{
@@ -51,7 +58,8 @@ void *guestThread(void *arg)
 			if (ret == -1 && errno == ETIMEDOUT)
 			{
 				// guest successfully slept for sleep_time seconds
-				cout << "Guest " << id << " successfully completed it's stay\n";
+				// cout << "Guest " << id << " successfully completed it's stay\n";
+				printf("Guest %d successfully completed it's stay\n", id);
 				hotel->checkout(id, sleep_time);
 				break;
 			}
@@ -59,7 +67,8 @@ void *guestThread(void *arg)
 			{
 				// guest was kicked out by another guest
 				// update time by the time he slept
-				cout << "Guest " << id << "  was kicked out by another guest\n";
+				// cout << "Guest " << id << " was kicked out by another guest\n";
+				printf("Guest %d was kicked out by another guest\n", id);
 				// hotel->checkout(id, sleep_time - (ts.tv_sec - time(NULL)));
 				break;
 			}

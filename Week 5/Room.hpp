@@ -47,14 +47,17 @@ struct Room
 		// signal the previous thread
 		pthread_cond_signal(&guest_cond[tmp]);
 
-		cout << "Guest " << this->guest << "  was alloted ";
+		// cout << "Guest " << this->guest << " was alloted ";
+		printf("Guest %d was alloted ", this->guest);
 		if (tmp != -1)
 		{
-			cout << "a room replacing Guest " << tmp << "\n";
+			// cout << "a room replacing Guest " << tmp << "\n";
+			printf("a room replacing Guest %d\n", tmp);
 		}
 		else
 		{
-			cout << "a clean room\n";
+			// cout << "a clean room\n";
+			printf("a clean room\n");
 		}
 		return true;
 	}
@@ -67,8 +70,6 @@ struct Room
 		guestPriority = -1;
 		pthread_mutex_unlock(&roomMutex);
 	}
-
-
 };
 
 #endif // _ROOM_HPP_

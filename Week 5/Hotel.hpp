@@ -22,7 +22,7 @@ struct Hotel
 
 		for (size_t i = 0; i < X; i++)
 		{
-			auto ptr = new size_t{i};
+			auto ptr = new int{static_cast<int32_t>(i)};
 			pthread_create(&cleaners[i], NULL, cleanerThread, ptr);
 		}
 	}

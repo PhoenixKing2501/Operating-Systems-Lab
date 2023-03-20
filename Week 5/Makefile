@@ -1,6 +1,6 @@
 OBJ     = main.o guest.o cleaner.o
 HEADERS = Room.hpp Common.hpp Hotel.hpp
-FLAGS   = -g -std=gnu++20 -lpthread -Wall -fdiagnostics-color -D_GNU_SOURCE -I.
+FLAGS   = -std=gnu++20 -lpthread -Wall -fdiagnostics-color -D_GNU_SOURCE -I.
 
 build: main
 
