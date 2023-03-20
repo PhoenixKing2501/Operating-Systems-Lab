@@ -55,7 +55,7 @@ void *guestThread(void *arg)
 		{
 			/*sleep and wait*/
 			ret = pthread_cond_timedwait(&guest_cond[id], &guest_mutex[id], &ts);
-			if (ret == -1 && errno == ETIMEDOUT)
+			if (ret == ETIMEDOUT)
 			{
 				// guest successfully slept for sleep_time seconds
 				// cout << "Guest " << id << " successfully completed it's stay\n";

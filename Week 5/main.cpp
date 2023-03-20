@@ -11,8 +11,8 @@ vector<int32_t> pr_guests;
 /*need to keep it global to share between multiple threads*/
 Hotel *hotel{nullptr};
 
-vector<pthread_mutex_t> guest_mutex;
-vector<pthread_cond_t> guest_cond;
+vector<pthread_mutex_t> guest_mutex{};
+vector<pthread_cond_t> guest_cond{};
 
 int32_t numGuests{};
 int32_t numRooms{};
@@ -22,7 +22,7 @@ int cleaner_ctr{0};
 
 int main(int argc, char const *argv[])
 {
-	srand(time(NULL));
+	srand(time(nullptr));
 
 	if (argc != 4)
 	{
@@ -57,8 +57,8 @@ int main(int argc, char const *argv[])
 
 	for (int32_t i = 0; i < numGuests; i++)
 	{
-		pthread_mutex_init(&guest_mutex[i], NULL);
-		pthread_cond_init(&guest_cond[i], NULL);
+		pthread_mutex_init(&guest_mutex[i], nullptr);
+		pthread_cond_init(&guest_cond[i], nullptr);
 	}
 
 	// cout << "Initialised all guest's mutex and cond\n";
@@ -66,6 +66,7 @@ int main(int argc, char const *argv[])
 
 	/*initialise the instance of hotel pointer*/
 	hotel = new Hotel(numCleaners, numRooms);
+	hotel->startCleaners();
 
 	// cout << "Initialised hotel instance\n";
 	printf("Initialised hotel instance\n");
@@ -75,13 +76,13 @@ int main(int argc, char const *argv[])
 	for (int32_t i = 0; i < numGuests; i++)
 	{
 		auto ptr = new int32_t{i};
-		pthread_create(&guests[i], NULL, guestThread, ptr);
+		pthread_create(&guests[i], nullptr, guestThread, ptr);
 	}
 
 	// cout << "Created all guest threads\n";
 	printf("Created all guest threads\n");
 
-	for(;;)
+	for (;;)
 	{
 		sleep(5);
 		fflush(stdout);
@@ -90,6 +91,6 @@ int main(int argc, char const *argv[])
 	// join the threads here
 	for (int32_t i = 0; i < numGuests; i++)
 	{
-		pthread_join(guests[i], NULL);
+		pthread_join(guests[i], nullptr);
 	}
 }

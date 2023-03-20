@@ -8,6 +8,7 @@ constexpr int ROOM_SIZE{2};
 #include <pthread.h>
 #include <semaphore.h>
 #include <unistd.h>
+#include <valarray>
 
 #include <array>
 #include <cstdint>
@@ -22,6 +23,7 @@ using namespace std;
 
 void *guestThread(void *arg);
 void *cleanerThread(void *arg);
+// int my_printf(const char *format, ...);
 
 extern vector<int32_t> pr_guests;
 extern vector<pthread_mutex_t> guest_mutex;

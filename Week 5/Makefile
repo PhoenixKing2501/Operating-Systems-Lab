@@ -1,6 +1,6 @@
 OBJ     = main.o guest.o cleaner.o
 HEADERS = Room.hpp Common.hpp Hotel.hpp
-FLAGS   = -std=gnu++20 -lpthread -Wall -fdiagnostics-color -D_GNU_SOURCE -I.
+FLAGS   = -O6 -std=gnu++20 -lpthread -Wall -fdiagnostics-color -D_GNU_SOURCE -I.
 
 build: main
 
@@ -11,7 +11,7 @@ main: $(OBJ) $(HEADERS)
 	g++ -c $< $(FLAGS)
 
 run: main
-	./main 3 5 4
+	./main 30 50 40 > out.log
 
 clean:
 	rm main *.o 
