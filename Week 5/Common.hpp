@@ -17,6 +17,9 @@ constexpr int ROOM_SIZE{2};
 
 using namespace std;
 
+#define REQTIME 2
+#define STAYTIME 3
+
 void *guestThread(void *arg);
 void *cleanerThread(void *arg);
 

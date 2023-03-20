@@ -17,10 +17,13 @@ struct Hotel
 		: rooms(N), cleaners(X)
 	{
 		sem_init(&requestLeft, 0, ROOM_SIZE * N);
+		pthread_mutex_init(&cleaner_mutex, NULL);
+		pthread_cond_init(&cleaner_cond, NULL);
 
 		for (size_t i = 0; i < X; i++)
 		{
-			pthread_create(&cleaners[i], NULL, cleanerThread, NULL);
+			auto ptr = new size_t{i};
+			pthread_create(&cleaners[i], NULL, cleanerThread, ptr);
 		}
 	}
 
@@ -34,7 +37,7 @@ struct Hotel
 		sem_destroy(&requestLeft);
 	}
 
-	bool allotRoom(pthread_t guest, int32_t priority)
+	bool allotRoom(int32_t guest, int32_t priority)
 	{
 		for (size_t i = 0; i < rooms.size(); i++)
 		{
@@ -47,19 +50,19 @@ struct Hotel
 		return false;
 	}
 	// can speed up both these functions
-	void updateTotalTime(pthread_t gid, int32_t time)
+	void checkout(int32_t gid, int32_t time)
 	{
 		for (size_t i = 0; i < rooms.size(); i++)
 		{
 			/*check if guest assigned this room*/
 			if (rooms[i].guest == gid)
 			{
-				rooms[i].updateTotalTime(time);
+				rooms[i].checkoutGuest(time);
 				break;
 			}
 		}
 	}
-	bool checkGuestInHotel(pthread_t gid)
+	bool checkGuestInHotel(int32_t gid)
 	{
 		for (size_t i = 0; i < rooms.size(); i++)
 		{

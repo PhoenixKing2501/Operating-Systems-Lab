@@ -10,7 +10,7 @@ struct Room
 	int32_t occupancy{};
 	int32_t totalTime{};
 
-	pthread_t guest{};
+	int32_t guest{-1};
 	int32_t guestPriority{-1};
 
 	pthread_mutex_t roomMutex;
@@ -24,7 +24,7 @@ struct Room
 		pthread_mutex_destroy(&roomMutex);
 	}
 
-	bool allotGuest(pthread_t guest, int32_t priority)
+	bool allotGuest(int32_t guest, int32_t priority)
 	{
 		pthread_mutex_lock(&roomMutex);
 		if (occupancy == ROOM_SIZE)
@@ -32,13 +32,14 @@ struct Room
 			pthread_mutex_unlock(&roomMutex);
 			return false;
 		}
+
 		else if (guestPriority > priority)
 		{
 			pthread_mutex_unlock(&roomMutex);
 			return false;
 		}
 
-		pthread_t tmp = this->guest;
+		auto tmp = this->guest;
 		this->guest = guest;
 		guestPriority = priority;
 		occupancy++;
@@ -47,7 +48,7 @@ struct Room
 		pthread_cond_signal(&guest_cond[tmp]);
 
 		cout << "Guest " << this->guest << "  was alloted ";
-		if (tmp != 0)
+		if (tmp != -1)
 		{
 			cout << "a room replacing Guest " << tmp << "\n";
 		}
@@ -57,12 +58,17 @@ struct Room
 		}
 		return true;
 	}
-	void updateTotalTime(int32_t time)
+
+	void checkoutGuest(int32_t time)
 	{
 		pthread_mutex_lock(&roomMutex);
 		totalTime += time;
+		guest = -1;
+		guestPriority = -1;
 		pthread_mutex_unlock(&roomMutex);
 	}
+
+
 };
 
 #endif // _ROOM_HPP_

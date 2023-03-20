@@ -2,11 +2,14 @@
 
 void *cleanerThread(void *arg)
 {
-	int id = pthread_self();
+	auto id = *((size_t *)arg);
+
+	delete (size_t *)arg;
 	int sval = -1;
 
 	while (true)
 	{
+		cout << "Cleaner " << id << " waiting for all rooms to be cleaned\n";
 		pthread_mutex_lock(&hotel->cleaner_mutex);
 		sem_getvalue(&hotel->requestLeft, &sval);
 
@@ -21,7 +24,7 @@ void *cleanerThread(void *arg)
 		// now start cleaning
 
 		int32_t st = ((numRooms / numCleaners) * id);
-		int32_t end = min(st + (numRooms / numCleaners), numRooms);
+		int32_t end = (id + 1 == numCleaners) ? numRooms : (numRooms / numCleaners) * (id + 1);
 
 		/*it will clean sequentially the ith set of N/Y rooms from the start*/
 		/*can lead to an uneven sleep distribution,think of distributing according to sleep time*/

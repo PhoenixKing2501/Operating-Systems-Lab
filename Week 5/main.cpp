@@ -46,10 +46,9 @@ int main(int argc, char const *argv[])
 	pr_guests.resize(numGuests);
 	for (int32_t i = 0; i < numGuests; i++)
 	{
-		pr_guests[i] = rand() % 100; /*priority is a random value between 0 and 100*/
+		pr_guests[i] = rand() % numGuests; /*priority is a random value between 0 and 100*/
+		cout << "Guest " << i << " has priority " << pr_guests[i] << endl;
 	}
-	/*initialise the instance of hotel pointer*/
-	hotel = new Hotel(numCleaners, numRooms);
 
 	/*initialise guest mutex and cond*/
 	guest_mutex.resize(numGuests);
@@ -61,11 +60,27 @@ int main(int argc, char const *argv[])
 		pthread_cond_init(&guest_cond[i], NULL);
 	}
 
+	cout << "Initialised all guest's mutex and cond\n";
+
+	/*initialise the instance of hotel pointer*/
+	hotel = new Hotel(numCleaners, numRooms);
+
+	cout << "Initialised hotel instance\n";
+
 	/*create the guest threads*/
 	vector<pthread_t> guests(numGuests);
 	for (int32_t i = 0; i < numGuests; i++)
 	{
-		pthread_create(&guests[i], NULL, guestThread, NULL);
+		auto ptr = new int32_t{i};
+		pthread_create(&guests[i], NULL, guestThread, ptr);
+	}
+
+	cout << "Created all guest threads\n";
+
+	for(;;)
+	{
+		sleep(5);
+		fflush(stdout);
 	}
 
 	// join the threads here
@@ -74,4 +89,3 @@ int main(int argc, char const *argv[])
 		pthread_join(guests[i], NULL);
 	}
 }
-
