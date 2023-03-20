@@ -39,16 +39,35 @@ struct Hotel
 
 	bool allotRoom(int32_t guest, int32_t priority)
 	{
+		size_t most_suitable;
+		int32_t min_priority = INT32_MAX;
+
 		for (size_t i = 0; i < rooms.size(); i++)
 		{
-			if (rooms[i].allotGuest(guest, priority))
+			pthread_mutex_lock(&rooms[i].roomMutex);
+			printf("Room %ld is being checked for alloting\n", i);
+			if (rooms[i].occupancy < ROOM_SIZE)
 			{
-				return true;
+				if (rooms[i].guestPriority < min_priority)
+				{
+					min_priority = rooms[i].guestPriority;
+					most_suitable = i;
+				}
 			}
+			pthread_mutex_unlock(&rooms[i].roomMutex);
 		}
 
-		return false;
+		// return false;
+		printf("Most suitable room is for %d guest is %ld\n", guest, most_suitable);
+		bool alloted = rooms[most_suitable].allotGuest(guest, priority);
+		if (alloted == true && rooms[most_suitable].occupancy == ROOM_SIZE)
+		{	
+			printf("Room %ld just got dirty\n", most_suitable);
+		}
+		return alloted;
 	}
+
+
 	// can speed up both these functions
 	void checkout(int32_t gid, int32_t time)
 	{

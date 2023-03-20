@@ -30,12 +30,14 @@ struct Room
 		if (occupancy == ROOM_SIZE)
 		{
 			pthread_mutex_unlock(&roomMutex);
+			printf("Guest %d could not be alloted this most suitable room dur to dirty\n",guest);
 			return false;
 		}
 
 		else if (guestPriority > priority)
 		{
 			pthread_mutex_unlock(&roomMutex);
+			printf("Guest %d could not be alloted this most suitable room due to priority\n", guest);
 			return false;
 		}
 
