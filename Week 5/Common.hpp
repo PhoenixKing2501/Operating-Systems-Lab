@@ -15,6 +15,7 @@ constexpr int ROOM_SIZE{2};
 #include <iostream>
 #include <string>
 #include <vector>
+#include <queue>
 
 using namespace std;
 
@@ -36,5 +37,6 @@ extern int32_t numCleaners;
 #include "Room.hpp"
 #include "Hotel.hpp"
 extern Hotel *hotel;
+#include "Compare.hpp"
 
 #endif // _COMMON_HPP_

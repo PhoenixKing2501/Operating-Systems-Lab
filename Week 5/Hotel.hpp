@@ -8,6 +8,10 @@
 struct Hotel
 {
 	vector<Room> rooms{};
+	// construct a priority queue of rooms where priority is first based on guestPriority and then by occupancy wuth a custom comparator
+
+	// priority_queue<Room,vector<Room>,cmprtr> guestPriorityQueue{};
+
 	vector<pthread_t> cleaners{};
 	sem_t requestLeft;
 	pthread_cond_t cleaner_cond;
@@ -18,7 +22,10 @@ struct Hotel
 		sem_init(&requestLeft, 0, ROOM_SIZE * N);
 		pthread_mutex_init(&cleaner_mutex, nullptr);
 		pthread_cond_init(&cleaner_cond, nullptr);
+		// number of rooms = N
+		// so put priority queue of rooms in the hotel
 		rooms.resize(N);
+		// priority_queue<Room, rooms_container, Compare> rooms{};
 		cleaners.resize(X);
 	}
 
@@ -41,7 +48,7 @@ struct Hotel
 		}
 	}
 
-	bool allotRoom(int32_t guest, int32_t priority)
+	int allotRoom(int32_t guest, int32_t priority)
 	{
 		size_t most_suitable;
 		int32_t min_priority = INT32_MAX;
@@ -64,36 +71,40 @@ struct Hotel
 		// return false;
 		printf("Most suitable room is for Guest %d is %lu\n", guest, most_suitable);
 		bool alloted = rooms[most_suitable].allotGuest(guest, priority);
-		if (alloted && rooms[most_suitable].occupancy == ROOM_SIZE)
-		{
-			printf("Room %lu just got dirty\n", most_suitable);
-		}
-		return alloted;
+		// if (alloted && rooms[most_suitable].occupancy == ROOM_SIZE)
+		// {
+		// 	printf("Room %lu just got dirty\n", most_suitable);
+		// }
+		return (alloted ? most_suitable : -1);
+		// return alloted;
 	}
 
 	// can speed up both these functions
-	void checkout(int32_t gid, int32_t time)
+	void checkoutGuest(int32_t roomNumber, int32_t time)
 	{
-		for (size_t i = 0; i < rooms.size(); ++i)
-		{
-			/*check if guest assigned this room*/
-			if (rooms[i].guest == gid)
-			{
-				rooms[i].checkoutGuest(time);
-				return;
-			}
-		}
+		// for (size_t i = 0; i < rooms.size(); ++i)
+		// {
+		// 	/*check if guest assigned this room*/
+		// 	if (rooms[i].guest == gid)
+		// 	{
+		// 		rooms[i].checkoutGuest(time);
+		// 		return;
+		// 	}
+		// }
+		rooms[roomNumber].checkoutGuest(time);
 	}
-	bool checkGuestInHotel(int32_t gid)
+	bool checkGuestInHotel(int32_t roomNumber,int32_t gid)
 	{
-		for (size_t i = 0; i < rooms.size(); ++i)
+		if (rooms[roomNumber].guest == gid)
 		{
-			if (rooms[i].guest == gid)
-			{
-				return true;
-			}
+			return true;
 		}
 		return false;
+	}
+
+	void updateTotalTime(int32_t roomNumber, int32_t time)
+	{
+		rooms[roomNumber].updateTotalTime(time);
 	}
 };
 

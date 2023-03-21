@@ -52,6 +52,9 @@ void *cleanerThread(void *arg)
 		pthread_mutex_lock(&hotel->cleaner_mutex);
 		if (cleaner_ctr == numRooms)
 		{
+			cleaner_ctr = 0;
+			pthread_cond_signal(&hotel->cleaner_cond);
+			pthread_mutex_unlock(&hotel->cleaner_mutex);
 			// cout << "Cleaners finished cleaning\n";
 			printf("Cleaners finished cleaning\n");
 			// all rooms are cleaned
@@ -60,16 +63,17 @@ void *cleanerThread(void *arg)
 			{
 				sem_post(&hotel->requestLeft);
 			}
-			pthread_cond_signal(&hotel->cleaner_cond);
-			cleaner_ctr = 0;
 		}
 		else
 		{
 			// cout << "Cleaner " << id << " waiting for other cleaners to finish\n";
 			printf("Cleaner %d waiting for other cleaners to finish\n", id);
-			pthread_cond_wait(&hotel->cleaner_cond, &hotel->cleaner_mutex);
+			while (cleaner_ctr != 0)
+			{
+				pthread_cond_wait(&hotel->cleaner_cond, &hotel->cleaner_mutex);
+			}
+			pthread_mutex_unlock(&hotel->cleaner_mutex);
 		}
-		pthread_mutex_unlock(&hotel->cleaner_mutex);
 	}
 
 	return nullptr;

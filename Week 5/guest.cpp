@@ -4,7 +4,7 @@ void *guestThread(void *arg)
 {
 	auto id = *static_cast<int32_t *>(arg);
 	delete static_cast<int32_t *>(arg);
-
+	int32_t roomNumber = -1, ret;
 	// cout << "In guestThread " << id << "\n";
 	printf("In guestThread %d\n", id);
 	while (true)
@@ -13,7 +13,7 @@ void *guestThread(void *arg)
 		// cout << "Guest " << id << " woke up\n";
 		printf("Guest %d woke up\n", id);
 		/*try to occupy a room*/
-		int ret = sem_trywait(&hotel->requestLeft);
+		ret = sem_trywait(&hotel->requestLeft);
 		// cout << "Guest " << id << " requested a room\n";
 		printf("Guest %d requested a room\n", id);
 
@@ -32,7 +32,8 @@ void *guestThread(void *arg)
 			}
 		}
 		/*call allotRoom to try to allot to this guest*/
-		if (not hotel->allotRoom(id, pr_guests[id]))
+		roomNumber = hotel->allotRoom(id, pr_guests[id]);
+		if (roomNumber == -1)
 		{
 			/*allotment failed,now released */
 			// cout << "Guest " << id << " could not be alloted a room\n";
@@ -51,7 +52,7 @@ void *guestThread(void *arg)
 		// cout << "Guest " << id << " is starting to sleep\n";
 		printf("Guest %d is starting to sleep\n", id);
 		pthread_mutex_lock(&guest_mutex[id]);
-		while (hotel->checkGuestInHotel(id)) // to guard against spurious wakeups
+		while (hotel->checkGuestInHotel(roomNumber, id)) // to guard against spurious wakeups
 		{
 			/*sleep and wait*/
 			ret = pthread_cond_timedwait(&guest_cond[id], &guest_mutex[id], &ts);
@@ -60,7 +61,7 @@ void *guestThread(void *arg)
 				// guest successfully slept for sleep_time seconds
 				// cout << "Guest " << id << " successfully completed it's stay\n";
 				printf("Guest %d successfully completed it's stay\n", id);
-				hotel->checkout(id, sleep_time);
+				hotel->checkoutGuest(roomNumber ,sleep_time);
 				break;
 			}
 			else if (ret == 0)
@@ -69,7 +70,7 @@ void *guestThread(void *arg)
 				// update time by the time he slept
 				// cout << "Guest " << id << " was kicked out by another guest\n";
 				printf("Guest %d was kicked out by another guest\n", id);
-				// hotel->checkout(id, sleep_time - (ts.tv_sec - time(NULL)));
+				hotel->updateTotalTime(roomNumber,sleep_time - (ts.tv_sec - time(NULL)));
 				break;
 			}
 		}
