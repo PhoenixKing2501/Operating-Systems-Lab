@@ -44,7 +44,7 @@ typedef struct Room
 			return false;
 		}
 
-		else if (guestPriority > priority && occupancy == ROOM_SIZE - 1)
+		else if (guestPriority > priority || (occupancy == ROOM_SIZE - 1 && guestPriority != -1))
 		{
 			pthread_mutex_unlock(&roomMutex);
 			printf("Guest %d could not be alloted this most suitable room due to priority or it's about to get dirty by this guest. "
@@ -53,24 +53,23 @@ typedef struct Room
 			return false;
 		}
 
+		// signal the previous thread
 		auto tmp = this->guest;
 		this->guest = guest;
 		guestPriority = priority;
 		pthread_mutex_unlock(&roomMutex);
-		// signal the previous thread
 
-		// cout << "Guest " << this->guest << " was alloted ";
 		printf("Guest %d was alloted ", this->guest);
 		if (tmp != -1)
 		{
-			occupancy++;
-			// cout << "a room replacing Guest " << tmp << "\n";
+			occupancy++; // this is being done for the previous guest
+
 			printf("a room replacing Guest %d\n", tmp);
 			pthread_cond_signal(&guest_cond[tmp]);
 		}
 		else
 		{
-			// cout << "a clean room\n";
+
 			printf("a clean room\n");
 		}
 		return true;
@@ -78,8 +77,8 @@ typedef struct Room
 
 	void checkoutGuest(int32_t time)
 	{
-		pthread_mutex_lock(&roomMutex);
 		updateTotalTime(time);
+		pthread_mutex_lock(&roomMutex);
 		guest = -1;
 		guestPriority = -1;
 		occupancy++;

@@ -47,7 +47,7 @@ int main(int argc, char const *argv[])
 	for (int32_t i = 0; i < numGuests; i++)
 	{
 		pr_guests[i] = rand() % numGuests; /*priority is a random value between 0 and 100*/
-		// cout << "Guest " << i << " has priority " << pr_guests[i] << endl;
+		
 		printf("Guest %d has priority %d\n", i, pr_guests[i]);
 	}
 
@@ -61,14 +61,14 @@ int main(int argc, char const *argv[])
 		pthread_cond_init(&guest_cond[i], nullptr);
 	}
 
-	// cout << "Initialised all guest's mutex and cond\n";
+	
 	printf("Initialised all guest's mutex and cond\n");
 
 	/*initialise the instance of hotel pointer*/
 	hotel = new Hotel(numCleaners, numRooms);
 	hotel->startCleaners();
 
-	// cout << "Initialised hotel instance\n";
+	
 	printf("Initialised hotel instance\n");
 
 	/*create the guest threads*/
@@ -79,7 +79,7 @@ int main(int argc, char const *argv[])
 		pthread_create(&guests[i], nullptr, guestThread, ptr);
 	}
 
-	// cout << "Created all guest threads\n";
+	
 	printf("Created all guest threads\n");
 
 	for (;;)

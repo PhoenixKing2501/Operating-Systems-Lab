@@ -14,7 +14,7 @@ void *cleanerThread(void *arg)
 
 	for (;;)
 	{
-		// cout << "Cleaner " << id << " waiting for all rooms to be cleaned\n";
+		
 		printf("Cleaner %d waiting for all rooms to be cleaned\n", id);
 		pthread_mutex_lock(&hotel->cleaner_mutex);
 		sem_getvalue(&hotel->requestLeft, &sval);
@@ -26,7 +26,7 @@ void *cleanerThread(void *arg)
 		}
 
 		pthread_mutex_unlock(&hotel->cleaner_mutex);
-		// cout << "Cleaner " << id << " started cleaning\n";
+		
 		printf("Cleaner %d started cleaning\n", id);
 		// now start cleaning
 
@@ -39,7 +39,7 @@ void *cleanerThread(void *arg)
 			sleep(hotel->rooms[i].totalTime);
 			/*acquire a lock and update room detail and increment counter*/
 			/*every cleaner can have a mutex here to achieve higher parallelism*/
-			// cout << "Cleaner " << id << " cleaned room " << i + 1 << "\n";
+			
 			printf("Cleaner %d cleaning room %d\n", id, i);
 			hotel->rooms[i].cleanRoom();
 
@@ -55,7 +55,7 @@ void *cleanerThread(void *arg)
 			cleaner_ctr = 0;
 			pthread_cond_signal(&hotel->cleaner_cond);
 			pthread_mutex_unlock(&hotel->cleaner_mutex);
-			// cout << "Cleaners finished cleaning\n";
+			
 			printf("Cleaners finished cleaning\n");
 			// all rooms are cleaned
 			// signal all guests by increasing semaphore value
@@ -66,7 +66,7 @@ void *cleanerThread(void *arg)
 		}
 		else
 		{
-			// cout << "Cleaner " << id << " waiting for other cleaners to finish\n";
+			
 			printf("Cleaner %d waiting for other cleaners to finish\n", id);
 			while (cleaner_ctr != 0)
 			{
