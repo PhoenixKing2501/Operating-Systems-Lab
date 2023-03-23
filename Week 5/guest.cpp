@@ -84,7 +84,7 @@ void *guestThread(void *arg)
 			{
 
 				hotel->updateTotalTime(roomNumber, sleep_time - (ts.tv_sec - time(NULL)));
-				printf("Guest %d was kicked out by another guest\n", id);
+				printf("Guest %d was kicked out\n", id);
 				break;
 			}
 		}
