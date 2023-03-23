@@ -35,8 +35,8 @@ extern int32_t numGuests;
 extern int32_t numCleaners;
 
 #include "Room.hpp"
+#include "Compare.hpp"
 #include "Hotel.hpp"
 extern Hotel *hotel;
-#include "Compare.hpp"
 
 #endif // _COMMON_HPP_
