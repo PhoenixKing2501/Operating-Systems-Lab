@@ -5,24 +5,37 @@ void *guestThread(void *arg)
 	auto id = *static_cast<int32_t *>(arg);
 	delete static_cast<int32_t *>(arg);
 
-	// cout << "In guestThread " << id << "\n";
 	printf("In guestThread %d\n", id);
 	while (true)
 	{
-		sleep(rand() % REQTIME + 5); /*sleep for a random time between 10 and 20 seconds*/
-		// cout << "Guest " << id << " woke up\n";
+		sleep(rand() % REQTIME + 5);
+
 		printf("Guest %d woke up\n", id);
-		/*try to occupy a room*/
+
 		int ret = sem_trywait(&hotel->requestLeft);
-		// cout << "Guest " << id << " requested a room\n";
+
 		printf("Guest %d requested a room\n", id);
 
 		if (ret == -1)
 		{
 			if (errno == EAGAIN)
 			{
-				/*no room can be occupied,has to clean now*/
-				pthread_cond_signal(&hotel->cleaner_cond);
+
+				pthread_mutex_lock(&hotel->cleaner_mutex);
+				if (roomToClean == -1)
+				{
+					roomToClean = 0;
+					roomsCleaned = 0;
+					pthread_mutex_unlock(&hotel->cleaner_mutex);
+					for (int32_t i = 0; i < numRooms; i++)
+					{
+						sem_post(&CleanerSem);
+					}
+				}
+				else
+				{
+					pthread_mutex_unlock(&hotel->cleaner_mutex);
+				}
 				sem_wait(&hotel->requestLeft);
 			}
 			else
@@ -31,45 +44,41 @@ void *guestThread(void *arg)
 				exit(EXIT_FAILURE);
 			}
 		}
-		/*call allotRoom to try to allot to this guest*/
+
+		roomToClean = -1;
+
 		if (not hotel->allotRoom(id, pr_guests[id]))
 		{
-			/*allotment failed,now released */
-			// cout << "Guest " << id << " could not be alloted a room\n";
+
 			printf("Guest %d could not be alloted a room\n", id);
 			sem_post(&hotel->requestLeft);
 			continue;
 		}
-		/*allotment successful,now occupied*/
-		/*now conditionally sleep and wait for random time*/
+
 		int32_t sleep_time = rand() % STAYTIME + 5;
 
 		timespec ts;
 		clock_gettime(CLOCK_REALTIME, &ts);
 		ts.tv_sec += sleep_time;
 
-		// cout << "Guest " << id << " is starting to sleep\n";
 		printf("Guest %d is starting to sleep\n", id);
 		pthread_mutex_lock(&guest_mutex[id]);
-		while (hotel->checkGuestInHotel(id)) // to guard against spurious wakeups
+		while (hotel->checkGuestInHotel(id))
 		{
-			/*sleep and wait*/
+
 			ret = pthread_cond_timedwait(&guest_cond[id], &guest_mutex[id], &ts);
 			if (ret == ETIMEDOUT)
 			{
-				// guest successfully slept for sleep_time seconds
-				// cout << "Guest " << id << " successfully completed it's stay\n";
+
 				printf("Guest %d successfully completed it's stay\n", id);
 				hotel->checkout(id, sleep_time);
 				break;
 			}
 			else if (ret == 0)
 			{
-				// guest was kicked out by another guest
-				// update time by the time he slept
-				// cout << "Guest " << id << " was kicked out by another guest\n";
+
 				printf("Guest %d was kicked out by another guest\n", id);
-				// hotel->checkout(id, sleep_time - (ts.tv_sec - time(NULL)));
+
 				break;
 			}
 		}

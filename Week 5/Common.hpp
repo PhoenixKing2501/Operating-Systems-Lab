@@ -32,6 +32,9 @@ extern int cleaner_ctr;
 extern int32_t numRooms;
 extern int32_t numGuests;
 extern int32_t numCleaners;
+extern sem_t CleanerSem;
+extern int32_t roomToClean;
+extern int32_t roomsCleaned;
 
 #include "Room.hpp"
 #include "Hotel.hpp"

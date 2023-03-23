@@ -20,6 +20,10 @@ int32_t numCleaners{};
 
 int cleaner_ctr{0};
 
+sem_t CleanerSem;
+int32_t roomToClean{-1};
+int32_t roomsCleaned{-1};
+
 int main(int argc, char const *argv[])
 {
 	srand(time(nullptr));
@@ -63,6 +67,8 @@ int main(int argc, char const *argv[])
 
 	// cout << "Initialised all guest's mutex and cond\n";
 	printf("Initialised all guest's mutex and cond\n");
+	// initialise the CleanerSem
+	sem_init(&CleanerSem, 0, 0);
 
 	/*initialise the instance of hotel pointer*/
 	hotel = new Hotel(numCleaners, numRooms);
