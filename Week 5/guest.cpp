@@ -27,6 +27,11 @@ void *guestThread(void *arg)
 				{
 					roomToClean = 0;
 					roomsCleaned = 0;
+					// signal all guest threads if sleeping
+					for (int32_t i = 0; i < numGuests; i++)
+					{
+						pthread_cond_signal(&guest_cond[i]);
+					}
 					pthread_mutex_unlock(&hotel->cleaner_mutex);
 					for (int32_t i = 0; i < numRooms; i++)
 					{
@@ -45,8 +50,8 @@ void *guestThread(void *arg)
 				exit(EXIT_FAILURE);
 			}
 		}
-		roomToClean = -1;
-		
+		// roomToClean = -1;
+
 		roomNumber = hotel->allotRoom(id, pr_guests[id]);
 		if (roomNumber == -1)
 		{

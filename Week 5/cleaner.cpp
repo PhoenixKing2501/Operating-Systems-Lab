@@ -32,7 +32,8 @@ void *cleanerThread(void *arg)
 		pthread_mutex_lock(&hotel->cleaner_mutex);
 		if (roomsCleaned == numRooms)
 		{
-
+			roomToClean = -1;
+			roomsCleaned = -1;
 			printf("Cleaners finished cleaning\n");
 
 			for (int i = 0; i < numRooms * ROOM_SIZE; i++)

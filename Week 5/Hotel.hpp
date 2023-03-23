@@ -61,7 +61,7 @@ struct Hotel
 		guestPriorityQueue.pop();
 		pthread_mutex_unlock(&guestPriorityQueue_mutex);
 
-		printf("Most suitable room is for Guest %d is %d\n", guest, most_suitable);
+		printf("Most suitable room for Guest %d is %d\n", guest, most_suitable);
 		bool alloted = rooms[most_suitable].allotGuest(guest, priority);
 
 		pthread_mutex_lock(&guestPriorityQueue_mutex);
