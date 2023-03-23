@@ -8,30 +8,41 @@
 struct Hotel
 {
 	vector<Room> rooms{};
+
+	priority_queue<pair<int32_t, Room>, vector<pair<int32_t, Room>>> guestPriorityQueue{};
+
 	vector<pthread_t> cleaners{};
 	sem_t requestLeft;
 	pthread_cond_t cleaner_cond;
 	pthread_mutex_t cleaner_mutex;
+	pthread_mutex_t guestPriorityQueue_mutex;
 
 	Hotel(int32_t X, int32_t N)
 	{
 		sem_init(&requestLeft, 0, ROOM_SIZE * N);
 		pthread_mutex_init(&cleaner_mutex, nullptr);
+		pthread_mutex_init(&guestPriorityQueue_mutex, nullptr);
 		pthread_cond_init(&cleaner_cond, nullptr);
+
 		rooms.resize(N);
+
+		for (int32_t i = 0; i < N; ++i)
+		{
+			guestPriorityQueue.push(make_pair(i, rooms[i]));
+		}
+
 		cleaners.resize(X);
 	}
 
 	~Hotel()
 	{
-		// join all cleaners
+
 		for (size_t i = 0; i < cleaners.size(); ++i)
 		{
 			pthread_join(cleaners[i], nullptr);
 		}
 		sem_destroy(&requestLeft);
 	}
-
 	void startCleaners()
 	{
 		for (int32_t i = 0; i < numCleaners; ++i)
@@ -41,60 +52,83 @@ struct Hotel
 		}
 	}
 
-	bool allotRoom(int32_t guest, int32_t priority)
+	int allotRoom(int32_t guest, int32_t priority)
 	{
-		size_t most_suitable;
-		int32_t min_priority = INT32_MAX;
+		int32_t most_suitable{numRooms};
 
-		for (size_t i = 0; i < rooms.size(); ++i)
-		{
-			pthread_mutex_lock(&rooms[i].roomMutex);
-			// printf("Room %ld is being checked for alloting\n", i);
-			if (rooms[i].occupancy < ROOM_SIZE)
-			{
-				if (rooms[i].guestPriority < min_priority)
-				{
-					min_priority = rooms[i].guestPriority;
-					most_suitable = i;
-				}
-			}
-			pthread_mutex_unlock(&rooms[i].roomMutex);
-		}
+		pthread_mutex_lock(&guestPriorityQueue_mutex);
+		most_suitable = guestPriorityQueue.top().first;
+		guestPriorityQueue.pop();
+		pthread_mutex_unlock(&guestPriorityQueue_mutex);
 
-		// return false;
-		printf("Most suitable room is for Guest %d is %lu\n", guest, most_suitable);
+		printf("Most suitable room is for Guest %d is %d\n", guest, most_suitable);
 		bool alloted = rooms[most_suitable].allotGuest(guest, priority);
-		if (alloted && rooms[most_suitable].occupancy == ROOM_SIZE)
-		{
-			printf("Room %lu just got dirty\n", most_suitable);
-		}
-		return alloted;
+
+		pthread_mutex_lock(&guestPriorityQueue_mutex);
+		guestPriorityQueue.push(make_pair(most_suitable, rooms[most_suitable]));
+		pthread_mutex_unlock(&guestPriorityQueue_mutex);
+
+		return ((alloted) ? most_suitable : -1);
 	}
 
-	// can speed up both these functions
-	void checkout(int32_t gid, int32_t time)
+	void checkoutGuest(int32_t roomNumber, int32_t time)
 	{
-		for (size_t i = 0; i < rooms.size(); ++i)
+		pthread_mutex_lock(&guestPriorityQueue_mutex);
+		rooms[roomNumber].checkoutGuest(time);
+
+		priority_queue<pair<int32_t, Room>> temp{};
+		while (!guestPriorityQueue.empty())
 		{
-			/*check if guest assigned this room*/
-			if (rooms[i].guest == gid)
+			if (guestPriorityQueue.top().first == roomNumber)
 			{
-				rooms[i].checkoutGuest(time);
-				return;
+				guestPriorityQueue.pop();
+				guestPriorityQueue.push(make_pair(roomNumber, rooms[roomNumber]));
+				break;
 			}
+			temp.push(guestPriorityQueue.top());
+			guestPriorityQueue.pop();
 		}
-	}
-	bool checkGuestInHotel(int32_t gid)
-	{
-		for (size_t i = 0; i < rooms.size(); ++i)
+		while (!temp.empty())
 		{
-			if (rooms[i].guest == gid)
-			{
-				return true;
-			}
+			guestPriorityQueue.push(temp.top());
+			temp.pop();
+		}
+		pthread_mutex_unlock(&guestPriorityQueue_mutex);
+	}
+
+	bool checkGuestInHotel(int32_t roomNumber, int32_t gid)
+	{
+		if (rooms[roomNumber].guest == gid)
+		{
+			return true;
 		}
 		return false;
 	}
+
+	void updateTotalTime(int32_t roomNumber, int32_t time)
+	{
+		pthread_mutex_lock(&guestPriorityQueue_mutex);
+		rooms[roomNumber].updateTotalTime(time);
+
+		priority_queue<pair<int32_t, Room>> temp{};
+		while (!guestPriorityQueue.empty())
+		{
+			if (guestPriorityQueue.top().first == roomNumber)
+			{
+				guestPriorityQueue.pop();
+				guestPriorityQueue.push(make_pair(roomNumber, rooms[roomNumber]));
+				break;
+			}
+			temp.push(guestPriorityQueue.top());
+			guestPriorityQueue.pop();
+		}
+		while (!temp.empty())
+		{
+			guestPriorityQueue.push(temp.top());
+			temp.pop();
+		}
+		pthread_mutex_unlock(&guestPriorityQueue_mutex);
+	}
 };
 
-#endif // _HOTEL_HPP_
+#endif

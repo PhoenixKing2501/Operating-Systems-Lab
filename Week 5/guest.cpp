@@ -4,6 +4,7 @@ void *guestThread(void *arg)
 {
 	auto id = *static_cast<int32_t *>(arg);
 	delete static_cast<int32_t *>(arg);
+	int32_t roomNumber = -1, ret;
 
 	printf("In guestThread %d\n", id);
 	while (true)
@@ -12,7 +13,7 @@ void *guestThread(void *arg)
 
 		printf("Guest %d woke up\n", id);
 
-		int ret = sem_trywait(&hotel->requestLeft);
+		ret = sem_trywait(&hotel->requestLeft);
 
 		printf("Guest %d requested a room\n", id);
 
@@ -44,10 +45,10 @@ void *guestThread(void *arg)
 				exit(EXIT_FAILURE);
 			}
 		}
-
 		roomToClean = -1;
-
-		if (not hotel->allotRoom(id, pr_guests[id]))
+		
+		roomNumber = hotel->allotRoom(id, pr_guests[id]);
+		if (roomNumber == -1)
 		{
 
 			printf("Guest %d could not be alloted a room\n", id);
@@ -63,22 +64,22 @@ void *guestThread(void *arg)
 
 		printf("Guest %d is starting to sleep\n", id);
 		pthread_mutex_lock(&guest_mutex[id]);
-		while (hotel->checkGuestInHotel(id))
+		while (hotel->checkGuestInHotel(roomNumber, id))
 		{
 
 			ret = pthread_cond_timedwait(&guest_cond[id], &guest_mutex[id], &ts);
 			if (ret == ETIMEDOUT)
 			{
 
+				hotel->checkoutGuest(roomNumber, sleep_time);
 				printf("Guest %d successfully completed it's stay\n", id);
-				hotel->checkout(id, sleep_time);
 				break;
 			}
 			else if (ret == 0)
 			{
 
+				hotel->updateTotalTime(roomNumber, sleep_time - (ts.tv_sec - time(NULL)));
 				printf("Guest %d was kicked out by another guest\n", id);
-
 				break;
 			}
 		}

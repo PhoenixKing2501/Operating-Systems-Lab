@@ -18,11 +18,23 @@ int32_t numGuests{};
 int32_t numRooms{};
 int32_t numCleaners{};
 
-int cleaner_ctr{0};
-
 sem_t CleanerSem;
 int32_t roomToClean{-1};
 int32_t roomsCleaned{-1};
+
+bool operator<(const pair<int32_t, Room> &below, const pair<int32_t, Room> &above)
+{
+	if (below.second.guestPriority > above.second.guestPriority)
+	{
+		return true;
+	}
+	else if (below.second.guestPriority == above.second.guestPriority && below.second.occupancy > above.second.occupancy)
+	{
+		return true;
+	}
+
+	return false;
+}
 
 int main(int argc, char const *argv[])
 {

@@ -15,6 +15,7 @@ constexpr int ROOM_SIZE{2};
 #include <iostream>
 #include <string>
 #include <vector>
+#include <queue>
 
 using namespace std;
 
@@ -28,7 +29,6 @@ void *cleanerThread(void *arg);
 extern vector<int32_t> pr_guests;
 extern vector<pthread_mutex_t> guest_mutex;
 extern vector<pthread_cond_t> guest_cond;
-extern int cleaner_ctr;
 extern int32_t numRooms;
 extern int32_t numGuests;
 extern int32_t numCleaners;
@@ -37,6 +37,7 @@ extern int32_t roomToClean;
 extern int32_t roomsCleaned;
 
 #include "Room.hpp"
+extern bool operator<(const pair<int32_t, Room> &below, const pair<int32_t, Room> &above);
 #include "Hotel.hpp"
 extern Hotel *hotel;
 
