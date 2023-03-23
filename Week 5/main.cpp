@@ -20,6 +20,20 @@ int32_t numCleaners{};
 
 int cleaner_ctr{0};
 
+bool operator<(const pair<int32_t, Room> &below, const pair<int32_t, Room> &above)
+{
+	if (below.second.guestPriority > above.second.guestPriority)
+	{
+		return true;
+	}
+	else if (below.second.guestPriority == above.second.guestPriority && below.second.occupancy > above.second.occupancy)
+	{
+		return true;
+	}
+
+	return false;
+}
+
 int main(int argc, char const *argv[])
 {
 	srand(time(nullptr));
@@ -47,7 +61,7 @@ int main(int argc, char const *argv[])
 	for (int32_t i = 0; i < numGuests; i++)
 	{
 		pr_guests[i] = rand() % numGuests; /*priority is a random value between 0 and 100*/
-		
+
 		printf("Guest %d has priority %d\n", i, pr_guests[i]);
 	}
 
@@ -61,14 +75,12 @@ int main(int argc, char const *argv[])
 		pthread_cond_init(&guest_cond[i], nullptr);
 	}
 
-	
 	printf("Initialised all guest's mutex and cond\n");
 
 	/*initialise the instance of hotel pointer*/
 	hotel = new Hotel(numCleaners, numRooms);
 	hotel->startCleaners();
 
-	
 	printf("Initialised hotel instance\n");
 
 	/*create the guest threads*/
@@ -79,7 +91,6 @@ int main(int argc, char const *argv[])
 		pthread_create(&guests[i], nullptr, guestThread, ptr);
 	}
 
-	
 	printf("Created all guest threads\n");
 
 	for (;;)

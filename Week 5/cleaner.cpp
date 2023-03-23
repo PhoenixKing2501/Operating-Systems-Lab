@@ -14,32 +14,26 @@ void *cleanerThread(void *arg)
 
 	for (;;)
 	{
-		
+
 		printf("Cleaner %d waiting for all rooms to be cleaned\n", id);
 		pthread_mutex_lock(&hotel->cleaner_mutex);
 		sem_getvalue(&hotel->requestLeft, &sval);
 
-		while (sval != 0) // to guard against spurious wakeups
+		while (sval != 0)
 		{
 			pthread_cond_wait(&hotel->cleaner_cond, &hotel->cleaner_mutex);
 			sem_getvalue(&hotel->requestLeft, &sval);
 		}
 
 		pthread_mutex_unlock(&hotel->cleaner_mutex);
-		
-		printf("Cleaner %d started cleaning\n", id);
-		// now start cleaning
 
-		/*it will clean sequentially the ith set of N/Y rooms from the start*/
-		/*can lead to an uneven sleep distribution,think of distributing according to sleep time*/
+		printf("Cleaner %d started cleaning\n", id);
 
 		for (int32_t i = st; i < end; ++i)
 		{
-			// int x = rand() % 10; // sleep for a time occupied by previous occupants multiplied by x
+
 			sleep(hotel->rooms[i].totalTime);
-			/*acquire a lock and update room detail and increment counter*/
-			/*every cleaner can have a mutex here to achieve higher parallelism*/
-			
+
 			printf("Cleaner %d cleaning room %d\n", id, i);
 			hotel->rooms[i].cleanRoom();
 
@@ -48,17 +42,15 @@ void *cleanerThread(void *arg)
 			pthread_mutex_unlock(&hotel->cleaner_mutex);
 		}
 
-		// acquire lock again and check if all rooms are cleaned by cleaner_ctr
 		pthread_mutex_lock(&hotel->cleaner_mutex);
 		if (cleaner_ctr == numRooms)
 		{
 			cleaner_ctr = 0;
 			pthread_cond_signal(&hotel->cleaner_cond);
 			pthread_mutex_unlock(&hotel->cleaner_mutex);
-			
+
 			printf("Cleaners finished cleaning\n");
-			// all rooms are cleaned
-			// signal all guests by increasing semaphore value
+
 			for (int i = 0; i < numRooms * ROOM_SIZE; i++)
 			{
 				sem_post(&hotel->requestLeft);
@@ -66,7 +58,7 @@ void *cleanerThread(void *arg)
 		}
 		else
 		{
-			
+
 			printf("Cleaner %d waiting for other cleaners to finish\n", id);
 			while (cleaner_ctr != 0)
 			{
