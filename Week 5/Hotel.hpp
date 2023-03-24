@@ -45,8 +45,6 @@ struct Hotel
 	}
 	void startCleaners()
 	{
-		roomToClean = -1;
-		roomsCleaned = -1;
 		for (int32_t i = 0; i < numCleaners; ++i)
 		{
 			auto ptr = new int32_t{i};
@@ -56,14 +54,13 @@ struct Hotel
 
 	int allotRoom(int32_t guest, int32_t priority)
 	{
-		int32_t most_suitable{numRooms};
+		int32_t most_suitable{-1};
 		int32_t min_priority = INT32_MAX;
 
 		pthread_mutex_lock(&roomAllot_mutex);
 
 		for (size_t i = 0; i < rooms.size() && min_priority != -1; ++i)
 		{
-
 			if (rooms[i].occupancy < ROOM_SIZE)
 			{
 				if (rooms[i].guestPriority < min_priority)

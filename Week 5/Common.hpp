@@ -8,8 +8,6 @@ constexpr int ROOM_SIZE{2};
 #include <pthread.h>
 #include <semaphore.h>
 #include <unistd.h>
-#include <valarray>
-
 #include <array>
 #include <cstdint>
 #include <iostream>
@@ -19,12 +17,11 @@ constexpr int ROOM_SIZE{2};
 
 using namespace std;
 
-#define REQTIME 2
-#define STAYTIME 3
+#define REQTIME 10
+#define STAYTIME 20
 
 void *guestThread(void *arg);
 void *cleanerThread(void *arg);
-// int my_printf(const char *format, ...);
 
 extern vector<int32_t> pr_guests;
 extern vector<pthread_mutex_t> guest_mutex;
@@ -34,7 +31,6 @@ extern int32_t numGuests;
 extern int32_t numCleaners;
 
 #include "Room.hpp"
-extern bool operator<(const pair<int32_t, Room> &below, const pair<int32_t, Room> &above);
 #include "Hotel.hpp"
 extern Hotel *hotel;
 

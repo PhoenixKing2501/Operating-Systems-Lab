@@ -10,7 +10,7 @@ void *guestThread(void *arg)
 	printf("In guestThread %d\n", id);
 	while (true)
 	{
-		sleep(rand() % REQTIME + 5);
+		sleep(rand() % REQTIME + 10);
 
 		printf("Guest %d woke up\n", id);
 
@@ -54,7 +54,7 @@ void *guestThread(void *arg)
 
 		sem_wait(&hotel->requestLeft);
 
-		int32_t sleep_time = rand() % STAYTIME + 5;
+		int32_t sleep_time = rand() % STAYTIME + 10;
 
 		timespec ts;
 		clock_gettime(CLOCK_REALTIME, &ts);

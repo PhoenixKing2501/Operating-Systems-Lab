@@ -77,4 +77,12 @@ int main(int argc, char const *argv[])
 	{
 		pthread_join(guests[i], nullptr);
 	}
+
+	for(int32_t i = 0; i < numGuests; i++)
+	{
+		pthread_mutex_destroy(&guest_mutex[i]);
+		pthread_cond_destroy(&guest_cond[i]);
+	}
+	
+	delete hotel;
 }

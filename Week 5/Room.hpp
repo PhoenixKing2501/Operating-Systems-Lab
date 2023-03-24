@@ -36,18 +36,18 @@ typedef struct Room
 
 	bool allotGuest(int32_t guest, int32_t priority)
 	{
-
+		pthread_mutex_lock(&room_mutex);
 		if (occupancy == ROOM_SIZE)
 		{
-
+			pthread_mutex_unlock(&room_mutex);
 			printf("Guest %d could not be alloted this most suitable room since it's dirty\n", guest);
 			return false;
 		}
 
 		else if (guestPriority >= priority)
 		{
-
-			printf("Guest %d could not be alloted this most suitable room due to priority"
+			pthread_mutex_unlock(&room_mutex);
+			printf("Guest %d could not be alloted this most suitable room due to priority, "
 				   "Room is already occupied by Guest %d\n",
 				   guest, this->guest);
 			return false;
@@ -57,8 +57,8 @@ typedef struct Room
 		this->guest = guest;
 		guestPriority = priority;
 		occupancy++;
-
 		printf("Guest %d was alloted ", this->guest);
+
 		if (tmp != -1)
 		{
 			printf("a room replacing Guest %d\n", tmp);
@@ -69,6 +69,7 @@ typedef struct Room
 
 			printf("a clean room\n");
 		}
+		pthread_mutex_unlock(&room_mutex);
 		return true;
 	}
 
@@ -78,7 +79,6 @@ typedef struct Room
 		pthread_mutex_lock(&room_mutex);
 		guest = -1;
 		guestPriority = -1;
-		occupancy++;
 		pthread_mutex_unlock(&room_mutex);
 	}
 
