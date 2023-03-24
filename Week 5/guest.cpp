@@ -4,7 +4,7 @@ void *guestThread(void *arg)
 {
 	auto id = *static_cast<int32_t *>(arg);
 	delete static_cast<int32_t *>(arg);
-	int32_t roomNumber = -1, ret;
+	int32_t roomNumber = -1, ret = 0;
 	int sval{};
 
 	printf("In guestThread %d\n", id);
@@ -73,16 +73,15 @@ void *guestThread(void *arg)
 				printf("Guest %d successfully completed it's stay\n", id);
 				break;
 			}
-			else if (ret == 0)
-			{
-
-				hotel->updateTotalTime(roomNumber, sleep_time - (ts.tv_sec - time(NULL)));
-				printf("Guest %d was kicked out\n", id);
-				break;
-			}
 		}
 
 		pthread_mutex_unlock(&guest_mutex[id]);
+		if (ret == 0)
+		{
+
+			hotel->updateTotalTime(roomNumber, sleep_time - (ts.tv_sec - time(NULL)));
+			printf("Guest %d was kicked out\n", id);
+		}
 	}
 
 	return NULL;
