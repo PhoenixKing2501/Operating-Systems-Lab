@@ -12,7 +12,7 @@ void *guestThread(void *arg)
 	{
 		sleep(rand() % REQTIME + 10);
 
-		printf("Guest %d woke up\n", id);
+		printf("Guest %d woke up and requested a room\n", id);
 
 		pthread_mutex_lock(&hotel->cleaner_mutex);
 
