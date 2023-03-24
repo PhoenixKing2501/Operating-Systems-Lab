@@ -8,43 +8,45 @@
 struct Hotel
 {
 	vector<Room> rooms{};
-
-	priority_queue<pair<int32_t, Room>, vector<pair<int32_t, Room>>> guestPriorityQueue{};
-
 	vector<pthread_t> cleaners{};
 	sem_t requestLeft;
+	sem_t CleanerSem;
 	pthread_cond_t cleaner_cond;
 	pthread_mutex_t cleaner_mutex;
-	pthread_mutex_t guestPriorityQueue_mutex;
+	pthread_mutex_t roomAllot_mutex;
+	int32_t roomToClean;
+	int32_t roomsCleaned;
 
 	Hotel(int32_t X, int32_t N)
 	{
 		sem_init(&requestLeft, 0, ROOM_SIZE * N);
+		sem_init(&CleanerSem, 0, 0);
+		pthread_mutex_init(&roomAllot_mutex, nullptr);
 		pthread_mutex_init(&cleaner_mutex, nullptr);
-		pthread_mutex_init(&guestPriorityQueue_mutex, nullptr);
 		pthread_cond_init(&cleaner_cond, nullptr);
-
+		roomToClean = -1;
+		roomsCleaned = -1;
 		rooms.resize(N);
-
-		for (int32_t i = 0; i < N; ++i)
-		{
-			guestPriorityQueue.push(make_pair(i, rooms[i]));
-		}
-
 		cleaners.resize(X);
 	}
 
 	~Hotel()
 	{
 
-		for (size_t i = 0; i < cleaners.size(); ++i)
-		{
-			pthread_join(cleaners[i], nullptr);
-		}
-		sem_destroy(&requestLeft);
+		// for (size_t i = 0; i < cleaners.size(); ++i)
+		// {
+		// 	pthread_join(cleaners[i], nullptr);
+		// }
+		// sem_destroy(&requestLeft);
+		// sem_destroy(&CleanerSem);
+		// pthread_mutex_destroy(&roomAllot_mutex);
+		// pthread_cond_destroy(&cleaner_cond);
+		// pthread_mutex_destroy(&cleaner_mutex);
 	}
 	void startCleaners()
 	{
+		// roomToClean = -1;
+		// roomsCleaned = -1;
 		for (int32_t i = 0; i < numCleaners; ++i)
 		{
 			auto ptr = new int32_t{i};
@@ -55,45 +57,35 @@ struct Hotel
 	int allotRoom(int32_t guest, int32_t priority)
 	{
 		int32_t most_suitable{numRooms};
+		int32_t min_priority = INT32_MAX;
 
-		pthread_mutex_lock(&guestPriorityQueue_mutex);
-		most_suitable = guestPriorityQueue.top().first;
-		guestPriorityQueue.pop();
-		pthread_mutex_unlock(&guestPriorityQueue_mutex);
+		// pthread_mutex_lock(&roomAllot_mutex);
+
+		for (size_t i = 0; i < rooms.size() && min_priority != -1; ++i)
+		{
+
+			if (rooms[i].occupancy < ROOM_SIZE)
+			{
+				if (rooms[i].guestPriority < min_priority)
+				{
+					min_priority = rooms[i].guestPriority;
+					most_suitable = i;
+				}
+			}
+		}
 
 		printf("Most suitable room for Guest %d is %d\n", guest, most_suitable);
 		bool alloted = rooms[most_suitable].allotGuest(guest, priority);
 
-		pthread_mutex_lock(&guestPriorityQueue_mutex);
-		guestPriorityQueue.push(make_pair(most_suitable, rooms[most_suitable]));
-		pthread_mutex_unlock(&guestPriorityQueue_mutex);
+		// pthread_mutex_unlock(&roomAllot_mutex);
 
 		return ((alloted) ? most_suitable : -1);
 	}
 
 	void checkoutGuest(int32_t roomNumber, int32_t time)
 	{
-		pthread_mutex_lock(&guestPriorityQueue_mutex);
-		rooms[roomNumber].checkoutGuest(time);
 
-		priority_queue<pair<int32_t, Room>> temp{};
-		while (!guestPriorityQueue.empty())
-		{
-			if (guestPriorityQueue.top().first == roomNumber)
-			{
-				guestPriorityQueue.pop();
-				guestPriorityQueue.push(make_pair(roomNumber, rooms[roomNumber]));
-				break;
-			}
-			temp.push(guestPriorityQueue.top());
-			guestPriorityQueue.pop();
-		}
-		while (!temp.empty())
-		{
-			guestPriorityQueue.push(temp.top());
-			temp.pop();
-		}
-		pthread_mutex_unlock(&guestPriorityQueue_mutex);
+		rooms[roomNumber].checkoutGuest(time);
 	}
 
 	bool checkGuestInHotel(int32_t roomNumber, int32_t gid)
@@ -107,27 +99,8 @@ struct Hotel
 
 	void updateTotalTime(int32_t roomNumber, int32_t time)
 	{
-		pthread_mutex_lock(&guestPriorityQueue_mutex);
-		rooms[roomNumber].updateTotalTime(time);
 
-		priority_queue<pair<int32_t, Room>> temp{};
-		while (!guestPriorityQueue.empty())
-		{
-			if (guestPriorityQueue.top().first == roomNumber)
-			{
-				guestPriorityQueue.pop();
-				guestPriorityQueue.push(make_pair(roomNumber, rooms[roomNumber]));
-				break;
-			}
-			temp.push(guestPriorityQueue.top());
-			guestPriorityQueue.pop();
-		}
-		while (!temp.empty())
-		{
-			guestPriorityQueue.push(temp.top());
-			temp.pop();
-		}
-		pthread_mutex_unlock(&guestPriorityQueue_mutex);
+		rooms[roomNumber].updateTotalTime(time);
 	}
 };
 

@@ -1,14 +1,9 @@
 #include "Common.hpp"
 #include <iostream>
 using namespace std;
-/*create a vector of priority*/
-/*initialise its size and dummy value in main*/
-/*need to keep it global to share between multiple threads*/
+
 vector<int32_t> pr_guests;
 
-/*create a pointer to a Hotel instance*/
-/*initialise it in main*/
-/*need to keep it global to share between multiple threads*/
 Hotel *hotel{nullptr};
 
 vector<pthread_mutex_t> guest_mutex{};
@@ -17,24 +12,6 @@ vector<pthread_cond_t> guest_cond{};
 int32_t numGuests{};
 int32_t numRooms{};
 int32_t numCleaners{};
-
-sem_t CleanerSem;
-int32_t roomToClean{-1};
-int32_t roomsCleaned{-1};
-
-bool operator<(const pair<int32_t, Room> &below, const pair<int32_t, Room> &above)
-{
-	if (below.second.guestPriority > above.second.guestPriority)
-	{
-		return true;
-	}
-	else if (below.second.guestPriority == above.second.guestPriority && below.second.occupancy > above.second.occupancy)
-	{
-		return true;
-	}
-
-	return false;
-}
 
 int main(int argc, char const *argv[])
 {
@@ -58,16 +35,13 @@ int main(int argc, char const *argv[])
 		return EXIT_FAILURE;
 	}
 
-	/*initialise the vector of priorities*/
 	pr_guests.resize(numGuests);
 	for (int32_t i = 0; i < numGuests; i++)
 	{
-		pr_guests[i] = rand() % numGuests; /*priority is a random value between 0 and 100*/
-		// cout << "Guest " << i << " has priority " << pr_guests[i] << endl;
+		pr_guests[i] = rand() % numGuests;
 		printf("Guest %d has priority %d\n", i, pr_guests[i]);
 	}
 
-	/*initialise guest mutex and cond*/
 	guest_mutex.resize(numGuests);
 	guest_cond.resize(numGuests);
 
@@ -77,19 +51,13 @@ int main(int argc, char const *argv[])
 		pthread_cond_init(&guest_cond[i], nullptr);
 	}
 
-	// cout << "Initialised all guest's mutex and cond\n";
 	printf("Initialised all guest's mutex and cond\n");
-	// initialise the CleanerSem
-	sem_init(&CleanerSem, 0, 0);
 
-	/*initialise the instance of hotel pointer*/
 	hotel = new Hotel(numCleaners, numRooms);
 	hotel->startCleaners();
 
-	// cout << "Initialised hotel instance\n";
 	printf("Initialised hotel instance\n");
 
-	/*create the guest threads*/
 	vector<pthread_t> guests(numGuests);
 	for (int32_t i = 0; i < numGuests; i++)
 	{
@@ -97,7 +65,6 @@ int main(int argc, char const *argv[])
 		pthread_create(&guests[i], nullptr, guestThread, ptr);
 	}
 
-	// cout << "Created all guest threads\n";
 	printf("Created all guest threads\n");
 
 	for (;;)
@@ -106,7 +73,6 @@ int main(int argc, char const *argv[])
 		fflush(stdout);
 	}
 
-	// join the threads here
 	for (int32_t i = 0; i < numGuests; i++)
 	{
 		pthread_join(guests[i], nullptr);

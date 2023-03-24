@@ -11,11 +11,11 @@ void *cleanerThread(void *arg)
 
 		printf("Cleaner %d waiting\n", id);
 
-		sem_wait(&CleanerSem);
+		sem_wait(&hotel->CleanerSem);
 
 		pthread_mutex_lock(&hotel->cleaner_mutex);
-		currentRoom = roomToClean;
-		roomToClean++;
+		currentRoom = hotel->roomToClean;
+		hotel->roomToClean++;
 		pthread_mutex_unlock(&hotel->cleaner_mutex);
 
 		printf("Cleaner %d started cleaning\n", id);
@@ -26,14 +26,14 @@ void *cleanerThread(void *arg)
 		hotel->rooms[currentRoom].cleanRoom();
 
 		pthread_mutex_lock(&hotel->cleaner_mutex);
-		roomsCleaned++;
+		hotel->roomsCleaned++;
 		pthread_mutex_unlock(&hotel->cleaner_mutex);
 
 		pthread_mutex_lock(&hotel->cleaner_mutex);
-		if (roomsCleaned == numRooms)
+		if (hotel->roomsCleaned == numRooms)
 		{
-			roomToClean = -1;
-			roomsCleaned = -1;
+			hotel->roomToClean = -1;
+			hotel->roomsCleaned = -1;
 			printf("Cleaners finished cleaning\n");
 
 			for (int i = 0; i < numRooms * ROOM_SIZE; i++)

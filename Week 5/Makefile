@@ -5,7 +5,7 @@ FLAGS   = -O6 -std=gnu++20 -lpthread -Wall -fdiagnostics-color -D_GNU_SOURCE -I.
 build: main
 
 main: $(OBJ) $(HEADERS)
-	g++ -o main $(OBJ) $(FLAGS)
+	g++ -o main $(OBJ) $(FLAGS) -g
 
 %.o: %.cpp $(HEADERS)
 	g++ -c $< $(FLAGS)

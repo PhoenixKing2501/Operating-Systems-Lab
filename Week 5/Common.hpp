@@ -32,9 +32,6 @@ extern vector<pthread_cond_t> guest_cond;
 extern int32_t numRooms;
 extern int32_t numGuests;
 extern int32_t numCleaners;
-extern sem_t CleanerSem;
-extern int32_t roomToClean;
-extern int32_t roomsCleaned;
 
 #include "Room.hpp"
 extern bool operator<(const pair<int32_t, Room> &below, const pair<int32_t, Room> &above);

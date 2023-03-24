@@ -23,10 +23,10 @@ void *guestThread(void *arg)
 			{
 
 				pthread_mutex_lock(&hotel->cleaner_mutex);
-				if (roomToClean == -1)
+				if (hotel->roomToClean == -1)
 				{
-					roomToClean = 0;
-					roomsCleaned = 0;
+					hotel->roomToClean = 0;
+					hotel->roomsCleaned = 0;
 					// signal all guest threads if sleeping
 					for (int32_t i = 0; i < numGuests; i++)
 					{
@@ -35,7 +35,7 @@ void *guestThread(void *arg)
 					pthread_mutex_unlock(&hotel->cleaner_mutex);
 					for (int32_t i = 0; i < numRooms; i++)
 					{
-						sem_post(&CleanerSem);
+						sem_post(&hotel->CleanerSem);
 					}
 				}
 				else
