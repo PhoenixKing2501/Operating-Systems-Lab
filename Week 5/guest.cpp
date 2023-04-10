@@ -4,7 +4,7 @@ void *guestThread(void *arg)
 {
 	auto id = *static_cast<int32_t *>(arg);
 	delete static_cast<int32_t *>(arg);
-	int32_t roomNumber = -1, ret = 0;
+	int32_t roomNumber = -1, ret;
 	int sval{};
 
 	printf("In guestThread %d\n", id);
@@ -29,30 +29,35 @@ void *guestThread(void *arg)
 				{
 					pthread_cond_signal(&guest_cond[i]);
 				}
-				pthread_mutex_unlock(&hotel->cleaner_mutex);
 				for (int32_t i = 0; i < numRooms; i++)
 				{
 					sem_post(&hotel->CleanerSem);
 				}
+				pthread_mutex_unlock(&hotel->cleaner_mutex);
 			}
 			else
 			{
 				pthread_mutex_unlock(&hotel->cleaner_mutex);
 			}
-			sem_wait(&hotel->requestLeft);
+			sem_wait(&hotel->requestLeft);			// this blocks
+			roomNumber = hotel->allotRoom(id, pr_guests[id]);
+			if (roomNumber == -1)
+			{
+				sem_post(&hotel->requestLeft);
+				continue;
+			}
 		}
 		else
 		{
 			pthread_mutex_unlock(&hotel->cleaner_mutex);
+			roomNumber = hotel->allotRoom(id, pr_guests[id]);
+			if (roomNumber == -1)
+			{
+				continue;
+			}
+			sem_wait(&hotel->requestLeft);		// this decrements
 		}
 
-		roomNumber = hotel->allotRoom(id, pr_guests[id]);
-		if (roomNumber == -1)
-		{
-			continue;
-		}
-
-		sem_wait(&hotel->requestLeft);
 
 		int32_t sleep_time = rand() % STAYTIME + 10;
 
@@ -73,15 +78,16 @@ void *guestThread(void *arg)
 				printf("Guest %d successfully completed it's stay\n", id);
 				break;
 			}
+			else if (ret == 0)
+			{
+
+				hotel->updateTotalTime(roomNumber, sleep_time - (ts.tv_sec - time(NULL)));
+				printf("Guest %d was kicked out\n", id);
+				break;
+			}
 		}
 
 		pthread_mutex_unlock(&guest_mutex[id]);
-		if (ret == 0)
-		{
-
-			hotel->updateTotalTime(roomNumber, sleep_time - (ts.tv_sec - time(NULL)));
-			printf("Guest %d was kicked out\n", id);
-		}
 	}
 
 	return NULL;
