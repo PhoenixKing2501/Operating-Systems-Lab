@@ -57,6 +57,7 @@ struct Table
         }
         return -1;
     }
+
 };
 
 Table T;
@@ -64,12 +65,25 @@ Element * mem;
 List freeList;
 
 
+void fn_beg()
+{
+    // Add a special entry to table
+    T.tab[T.size++] = Tablerow("fn_call", List());
+}
+
+void fn_end()
+{
+    // Remove everything upto the special entry from table?
+    // But that's the job of freeElem, so what to do here anyway?
+}
+
+
 
 bool createMem(size_t size)
 {
     // Allocate memory
     int eleNum = size / sizeof(Element);
-    mem = new Element[eleNum];
+    mem = new(std::nothrow) Element[eleNum];
     if(mem == nullptr) return false;
 
     // Initialize memory
