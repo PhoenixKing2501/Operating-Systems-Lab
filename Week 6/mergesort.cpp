@@ -1,6 +1,9 @@
 #include <iostream>
 #include <cstdlib>
 #include <cstring>
+#include <time.h>
+
+//------------------------------------------------
 
 void fn_beg();
 void fn_end();
@@ -10,6 +13,7 @@ bool assignVal(const char * list_name, int idx, int val);
 int getVal(const char * list_name, int idx);
 int freeElem(const char * list_name);
 int freeElem();
+
 struct Element
 {
     int prev;
@@ -66,6 +70,24 @@ struct Table
             //     return -1;
             // }
         }
+        fprintf(stderr, "Table::find: %s not found\n", name);
+        return -1;
+    }
+
+    int findInScope(const char * name)
+    {
+        for (int i = size-1; i >= 0; --i)   // Search from the end
+        {
+            if (strcmp(tab[i].name, name) == 0)
+            {
+                return i;
+            }
+            else if(strncmp(tab[i].name, "fn_call", 8) == 0)   // Search upto the special entry
+            {
+                return -1;
+            }
+        }
+        fprintf(stderr, "Table::findInScope: %s not found\n", name);
         return -1;
     }
 
@@ -119,13 +141,14 @@ bool createList(const char * name, int num_elements)
 {   
     if(num_elements > freeList.size)
     {
-        fprintf(stderr, "Not enough memory to create list %s", name);
+        fprintf(stderr, "createList: Not enough memory to create %s\n", name);
         return false;
     }
 
-    if(T.find(name) != -1)
+    std::cout << "createList: " << name << ": " << T.size << std::endl;
+    if(T.findInScope(name) != -1)
     {
-        fprintf(stderr, "List %s already exists in current function scope", name);
+        fprintf(stderr, "createList: %s already exists in current function scope\n", name);
         return false;
     }
 
@@ -158,7 +181,7 @@ bool assignVal(const char * list_name, int idx, int val)
     // Check if index is within the list size
     if (idx >= l.size)
     {
-        fprintf(stderr, "assignVal: Index out of bounds");
+        fprintf(stderr, "assignVal: Index out of bounds in %s\n", list_name);
         return false;
     }
 
@@ -171,14 +194,17 @@ int getVal(const char * list_name, int idx)
 {
     // Find the table row
     int row = T.find(list_name);
-    if(row == -1) return -1;
+    if(row == -1)
+    {
+        return -1;
+    }
 
     List l = T.tab[row].li;
 
     // Check if index is within the list size
     if (idx >= l.size)
     {
-        fprintf(stderr, "getVal: Index out of bounds");
+        fprintf(stderr, "getVal: Index out of bounds in list %s\n", list_name);
         return -1;
     }
 
@@ -234,114 +260,126 @@ void printTable()
     }
 }
 
+//------------------------------------------------
 
-// A function to test
-void fn()
+
+
+
+
+void merge(const char * big_list, const char * left, const char * right, int left_size, int right_size)
 {
-    createList("list1", 10);
-    createList("list2", 10);
+    int i = 0, j = 0, k = 0;
+    while (i < left_size && j < right_size)
+    {
+        int ret = getVal(left, i);
+        int ret2 = getVal(right, j);
+        if(ret == -1 || ret2 == -1) 
+        {
+            fprintf(stderr, "merge\n");
+            exit(0);
+        }
+        if (getVal(left, i) < getVal(right, j))
+        {
+            assignVal(big_list, k, getVal(left, i));
+            ++i;
+        }
+        else
+        {
+            assignVal(big_list, k, getVal(right, j));
+            ++j;
+        }
+        ++k;
+    }
+
+    while (i < left_size)
+    {
+        assignVal(big_list, k, getVal(left, i));
+        ++i;
+        ++k;
+    }
+
+    while (j < right_size)
+    {
+        assignVal(big_list, k, getVal(right, j));
+        ++j;
+        ++k;
+    }
 }
 
+void mergesort(const char * list_name, int start, int end)
+{
+    if (start < end)
+    {
+        int mid = (start + end) / 2;
+
+        printTable();
+        std::cout << "mergesort: " << list_name << " " << start << " " << end << std::endl;
+
+        createList("left", mid - start + 1);
+        createList("right", end - mid);
+
+        for (int i = start; i <= mid; ++i)
+        {
+            int ret = getVal(list_name, i);
+            if(ret == -1)
+            {
+                fprintf(stderr, "mergesort1\n");
+                exit(0);
+            }
+            assignVal("left", i - start, getVal(list_name, i));
+        }
+
+        for (int i = mid + 1; i <= end; ++i)
+        {
+            int ret = getVal(list_name, i);
+            if(ret == -1)
+            {
+                fprintf(stderr, "mergesort2\n");
+                exit(0);
+            }
+            assignVal("right", i - mid - 1, getVal(list_name, i));
+        }
+
+        fn_beg();
+        mergesort("left", start, mid);
+        fn_end();
+
+        fn_beg();
+        mergesort("right", mid + 1, end);
+        fn_end();
+
+        fn_beg();
+        merge(list_name, "left", "right", mid - start + 1, end - mid);
+        fn_end();
+    }
+}
 
 
 int main()
 {
-    if(!createMem(1<<20))
+    // Create a list of random numbers of size 100 KB
+    srand(time(NULL));
+    size_t size = 100 * 1024;
+    createMem(size);
+    createList("mylist", 10);
+    for (int i = 0; i < 10; ++i)
     {
-        fprintf(stderr, "Failed to create memory");
-        return 1;
+        assignVal("mylist", i, rand() % 1000);
     }
 
-    std::cout << "Memory created" << std::endl;
-
-    std::cout << "Head of freeList: " << freeList.head << std::endl;
-    std::cout << "Tail of freeList: " << freeList.tail << std::endl;
-
-    if(!createList("list1", 10))
-    {
-        fprintf(stderr, "Failed to create list1");
-        return 1;
-    }
-
-    if(!createList("list2", 10))
-    {
-        fprintf(stderr, "Failed to create list2");
-        return 1;
-    }
-
-    std::cout << "Lists created" << std::endl;
-
-    std::cout << "Head of list1: " << T.tab[T.find("list1")].li.head << std::endl;
-    std::cout << "Tail of list1: " << T.tab[T.find("list1")].li.tail << std::endl;
-
-    std::cout << "Head of list2: " << T.tab[T.find("list2")].li.head << std::endl;
-    std::cout << "Tail of list2: " << T.tab[T.find("list2")].li.tail << std::endl;
-
-    std::cout << "Head of freeList: " << freeList.head << std::endl;
-    std::cout << "Tail of freeList: " << freeList.tail << std::endl;
-
-    printTable();
-
+    // Sort the list
     fn_beg();
-    fn();
-    printTable();
+    mergesort("mylist", 0, 9);
     fn_end();
 
-    if(!assignVal("list1", 0, 10))
+    // Print the sorted list
+    for (int i = 0; i < 10; ++i)
     {
-        fprintf(stderr, "Failed to assign value to list1");
-        return 1;
+        std::cout << getVal("mylist", i) << " ";
     }
+    std::cout << std::endl;
 
-    if(!assignVal("list1", 1, 20))
-    {
-        fprintf(stderr, "Failed to assign value to list1");
-        return 1;
-    }
 
-    if(!assignVal("list2", 0, 30))
-    {
-        fprintf(stderr, "Failed to assign value to list2");
-        return 1;
-    }
-
-    if(!assignVal("list2", 1, 40))
-    {
-        fprintf(stderr, "Failed to assign value to list2");
-        return 1;
-    }
-
-    std::cout << "Values assigned" << std::endl;
-
-    std::cout << "list1[0] = " << getVal("list1", 0) << std::endl;
-    std::cout << "list1[1] = " << getVal("list1", 1) << std::endl;
-
-    std::cout << "list2[0] = " << getVal("list2", 0) << std::endl;
-    std::cout << "list2[1] = " << getVal("list2", 1) << std::endl;
-
-    std::cout << "Values retrieved" << std::endl;
-
-    if(!freeElem("list1"))
-    {
-        fprintf(stderr, "Failed to free list1");
-        return 1;
-    }
-
-    std::cout << "list1 freed" << std::endl;
-
-    std::cout << "Head of freeList: " << freeList.head << std::endl;
-    std::cout << "Tail of freeList: " << freeList.tail << std::endl;
-
-    if(!freeElem("list2"))
-    {
-        fprintf(stderr, "Failed to free list2");
-        return 1;
-    }
-
-    std::cout << "List2 freed" << std::endl;
-
-    std::cout << "Head of freeList: " << freeList.head << std::endl;
-    std::cout << "Tail of freeList: " << freeList.tail << std::endl;
 
     return 0;
 }
