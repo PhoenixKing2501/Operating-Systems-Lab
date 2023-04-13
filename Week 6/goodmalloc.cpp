@@ -2,14 +2,8 @@
 #include <cstdlib>
 #include <cstring>
 
-void fn_beg();
-void fn_end();
-bool createMem(size_t size);
-bool createList(const char * name, int num_elements);
-bool assignVal(const char * list_name, int idx, int val);
-int getVal(const char * list_name, int idx);
-int freeElem(const char * list_name);
-int freeElem();
+//------------------------------------------------
+#include "goodmalloc.hpp"
 struct Element
 {
     int prev;
@@ -61,11 +55,25 @@ struct Table
             {
                 return i;
             }
-            // else if(strcmp(name, "fn_call") == 0)   // Search upto the special entry
-            // {
-            //     return -1;
-            // }
         }
+        // fprintf(stderr, "Table::find: %s not found\n", name);
+        return -1;
+    }
+
+    int findInScope(const char * name)
+    {
+        for (int i = size-1; i >= 0; --i)   // Search from the end
+        {
+            if (strcmp(tab[i].name, name) == 0)
+            {
+                return i;
+            }
+            else if(strncmp(tab[i].name, "fn_call", 8) == 0)   // Search upto the special entry
+            {
+                return -1;
+            }
+        }
+        // fprintf(stderr, "Table::findInScope: %s not found\n", name);
         return -1;
     }
 
@@ -119,13 +127,13 @@ bool createList(const char * name, int num_elements)
 {   
     if(num_elements > freeList.size)
     {
-        fprintf(stderr, "Not enough memory to create list %s", name);
+        fprintf(stderr, "createList: Not enough memory to create %s\n", name);
         return false;
     }
 
-    if(T.find(name) != -1)
+    if(T.findInScope(name) != -1)
     {
-        fprintf(stderr, "List %s already exists in current function scope", name);
+        fprintf(stderr, "createList: %s already exists in current function scope\n", name);
         return false;
     }
 
@@ -158,12 +166,18 @@ bool assignVal(const char * list_name, int idx, int val)
     // Check if index is within the list size
     if (idx >= l.size)
     {
-        fprintf(stderr, "assignVal: Index out of bounds");
+        // fprintf(stderr, "assignVal: Index out of bounds in %s\n", list_name);
         return false;
     }
 
     // Assign value in the memory
-    mem[l.head + idx].data = val;
+    // Find the position by parsing linked list
+    int ptr = l.head;
+    for (int i = 0; i < idx; ++i)
+    {
+        ptr = mem[ptr].next;
+    }
+    mem[ptr].data = val;
     return true;
 }
 
@@ -171,24 +185,32 @@ int getVal(const char * list_name, int idx)
 {
     // Find the table row
     int row = T.find(list_name);
-    if(row == -1) return -1;
+    if(row == -1)
+    {
+        return -1;
+    }
 
     List l = T.tab[row].li;
 
     // Check if index is within the list size
     if (idx >= l.size)
     {
-        fprintf(stderr, "getVal: Index out of bounds");
+        // fprintf(stderr, "getVal: Index out of bounds in list %s\n", list_name);
         return -1;
     }
 
-    // Get value from the memory
-    return mem[l.head + idx].data;
+    // Get value from the memory, Parse the linked list
+    int ptr = l.head;
+    for (int i = 0; i < idx; ++i)
+    {
+        ptr = mem[ptr].next;
+    }
+    return mem[ptr].data;
 }
 
 int freeElem(const char * list_name)
 {
-    // Find the table row (searching upto the special entry)
+    // Find the table row
     int row = T.find(list_name);
     if(row == -1) return 0;
 
@@ -214,7 +236,7 @@ int freeElem()
         --T.size;
         ++deleted;
     }
-    if(T.tab[T.size-1].name == "fn_call")
+    if(strcmp(T.tab[T.size-1].name, "fn_call") == 0)
     {
         --T.size;
         ++deleted;
@@ -226,122 +248,124 @@ int freeElem()
 
 void printTable()
 {
-    std::cout << "Table:" << std::endl;
-    std::cout << "Name \t Head \t Tail \t Size" << std::endl;
+    printf("-------------Table-----------\n");
+    printf("Name \t Head \t Tail \t Size\n");
     for (int i = 0; i < T.size; ++i)
     {
-        std::cout << T.tab[i].name << " " << T.tab[i].li.head << " " << T.tab[i].li.tail << " " << T.tab[i].li.size << std::endl;
+        printf("%s \t %d \t %d \t %d\n", T.tab[i].name, T.tab[i].li.head, T.tab[i].li.tail, T.tab[i].li.size);
     }
+    printf("-----------------------------\n");
 }
 
+//------------------------------------------------
 
-// A function to test
-void fn()
-{
-    createList("list1", 10);
-    createList("list2", 10);
-}
+// // A function to test
+// void fn()
+// {
+//     createList("list1", 10);
+//     createList("list2", 10);
+// }
 
 
 
-int main()
-{
-    if(!createMem(1<<20))
-    {
-        fprintf(stderr, "Failed to create memory");
-        return 1;
-    }
+// int main()
+// {
+//     if(!createMem(1<<20))
+//     {
+//         fprintf(stderr, "Failed to create memory");
+//         return 1;
+//     }
 
-    std::cout << "Memory created" << std::endl;
+//     std::cout << "Memory created" << std::endl;
 
-    std::cout << "Head of freeList: " << freeList.head << std::endl;
-    std::cout << "Tail of freeList: " << freeList.tail << std::endl;
+//     std::cout << "Head of freeList: " << freeList.head << std::endl;
+//     std::cout << "Tail of freeList: " << freeList.tail << std::endl;
 
-    if(!createList("list1", 10))
-    {
-        fprintf(stderr, "Failed to create list1");
-        return 1;
-    }
+//     if(!createList("list1", 10))
+//     {
+//         fprintf(stderr, "Failed to create list1");
+//         return 1;
+//     }
 
-    if(!createList("list2", 10))
-    {
-        fprintf(stderr, "Failed to create list2");
-        return 1;
-    }
+//     if(!createList("list2", 10))
+//     {
+//         fprintf(stderr, "Failed to create list2");
+//         return 1;
+//     }
 
-    std::cout << "Lists created" << std::endl;
+//     std::cout << "Lists created" << std::endl;
 
-    std::cout << "Head of list1: " << T.tab[T.find("list1")].li.head << std::endl;
-    std::cout << "Tail of list1: " << T.tab[T.find("list1")].li.tail << std::endl;
+//     std::cout << "Head of list1: " << T.tab[T.find("list1")].li.head << std::endl;
+//     std::cout << "Tail of list1: " << T.tab[T.find("list1")].li.tail << std::endl;
 
-    std::cout << "Head of list2: " << T.tab[T.find("list2")].li.head << std::endl;
-    std::cout << "Tail of list2: " << T.tab[T.find("list2")].li.tail << std::endl;
+//     std::cout << "Head of list2: " << T.tab[T.find("list2")].li.head << std::endl;
+//     std::cout << "Tail of list2: " << T.tab[T.find("list2")].li.tail << std::endl;
 
-    std::cout << "Head of freeList: " << freeList.head << std::endl;
-    std::cout << "Tail of freeList: " << freeList.tail << std::endl;
+//     std::cout << "Head of freeList: " << freeList.head << std::endl;
+//     std::cout << "Tail of freeList: " << freeList.tail << std::endl;
 
-    printTable();
+//     printTable();
 
-    fn_beg();
-    fn();
-    printTable();
-    fn_end();
+//     fn_beg();
+//     fn();
+//     printTable();
+//     fn_end();
 
-    if(!assignVal("list1", 0, 10))
-    {
-        fprintf(stderr, "Failed to assign value to list1");
-        return 1;
-    }
+//     if(!assignVal("list1", 0, 10))
+//     {
+//         fprintf(stderr, "Failed to assign value to list1");
+//         return 1;
+//     }
 
-    if(!assignVal("list1", 1, 20))
-    {
-        fprintf(stderr, "Failed to assign value to list1");
-        return 1;
-    }
+//     if(!assignVal("list1", 1, 20))
+//     {
+//         fprintf(stderr, "Failed to assign value to list1");
+//         return 1;
+//     }
 
-    if(!assignVal("list2", 0, 30))
-    {
-        fprintf(stderr, "Failed to assign value to list2");
-        return 1;
-    }
+//     if(!assignVal("list2", 0, 30))
+//     {
+//         fprintf(stderr, "Failed to assign value to list2");
+//         return 1;
+//     }
 
-    if(!assignVal("list2", 1, 40))
-    {
-        fprintf(stderr, "Failed to assign value to list2");
-        return 1;
-    }
+//     if(!assignVal("list2", 1, 40))
+//     {
+//         fprintf(stderr, "Failed to assign value to list2");
+//         return 1;
+//     }
 
-    std::cout << "Values assigned" << std::endl;
+//     std::cout << "Values assigned" << std::endl;
 
-    std::cout << "list1[0] = " << getVal("list1", 0) << std::endl;
-    std::cout << "list1[1] = " << getVal("list1", 1) << std::endl;
+//     std::cout << "list1[0] = " << getVal("list1", 0) << std::endl;
+//     std::cout << "list1[1] = " << getVal("list1", 1) << std::endl;
 
-    std::cout << "list2[0] = " << getVal("list2", 0) << std::endl;
-    std::cout << "list2[1] = " << getVal("list2", 1) << std::endl;
+//     std::cout << "list2[0] = " << getVal("list2", 0) << std::endl;
+//     std::cout << "list2[1] = " << getVal("list2", 1) << std::endl;
 
-    std::cout << "Values retrieved" << std::endl;
+//     std::cout << "Values retrieved" << std::endl;
 
-    if(!freeElem("list1"))
-    {
-        fprintf(stderr, "Failed to free list1");
-        return 1;
-    }
+//     if(!freeElem("list1"))
+//     {
+//         fprintf(stderr, "Failed to free list1");
+//         return 1;
+//     }
 
-    std::cout << "list1 freed" << std::endl;
+//     std::cout << "list1 freed" << std::endl;
 
-    std::cout << "Head of freeList: " << freeList.head << std::endl;
-    std::cout << "Tail of freeList: " << freeList.tail << std::endl;
+//     std::cout << "Head of freeList: " << freeList.head << std::endl;
+//     std::cout << "Tail of freeList: " << freeList.tail << std::endl;
 
-    if(!freeElem("list2"))
-    {
-        fprintf(stderr, "Failed to free list2");
-        return 1;
-    }
+//     if(!freeElem("list2"))
+//     {
+//         fprintf(stderr, "Failed to free list2");
+//         return 1;
+//     }
 
-    std::cout << "List2 freed" << std::endl;
+//     std::cout << "List2 freed" << std::endl;
 
-    std::cout << "Head of freeList: " << freeList.head << std::endl;
-    std::cout << "Tail of freeList: " << freeList.tail << std::endl;
+//     std::cout << "Head of freeList: " << freeList.head << std::endl;
+//     std::cout << "Tail of freeList: " << freeList.tail << std::endl;
 
-    return 0;
-}
+//     return 0;
+// }
