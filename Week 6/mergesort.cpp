@@ -65,12 +65,8 @@ struct Table
             {
                 return i;
             }
-            // else if(strcmp(name, "fn_call") == 0)   // Search upto the special entry
-            // {
-            //     return -1;
-            // }
         }
-        fprintf(stderr, "Table::find: %s not found\n", name);
+        // fprintf(stderr, "Table::find: %s not found\n", name);
         return -1;
     }
 
@@ -87,7 +83,7 @@ struct Table
                 return -1;
             }
         }
-        fprintf(stderr, "Table::findInScope: %s not found\n", name);
+        // fprintf(stderr, "Table::findInScope: %s not found\n", name);
         return -1;
     }
 
@@ -145,7 +141,6 @@ bool createList(const char * name, int num_elements)
         return false;
     }
 
-    std::cout << "createList: " << name << ": " << T.size << std::endl;
     if(T.findInScope(name) != -1)
     {
         fprintf(stderr, "createList: %s already exists in current function scope\n", name);
@@ -181,12 +176,18 @@ bool assignVal(const char * list_name, int idx, int val)
     // Check if index is within the list size
     if (idx >= l.size)
     {
-        fprintf(stderr, "assignVal: Index out of bounds in %s\n", list_name);
+        // fprintf(stderr, "assignVal: Index out of bounds in %s\n", list_name);
         return false;
     }
 
     // Assign value in the memory
-    mem[l.head + idx].data = val;
+    // Find the position by parsing linked list
+    int ptr = l.head;
+    for (int i = 0; i < idx; ++i)
+    {
+        ptr = mem[ptr].next;
+    }
+    mem[ptr].data = val;
     return true;
 }
 
@@ -204,17 +205,22 @@ int getVal(const char * list_name, int idx)
     // Check if index is within the list size
     if (idx >= l.size)
     {
-        fprintf(stderr, "getVal: Index out of bounds in list %s\n", list_name);
+        // fprintf(stderr, "getVal: Index out of bounds in list %s\n", list_name);
         return -1;
     }
 
-    // Get value from the memory
-    return mem[l.head + idx].data;
+    // Get value from the memory, Parse the linked list
+    int ptr = l.head;
+    for (int i = 0; i < idx; ++i)
+    {
+        ptr = mem[ptr].next;
+    }
+    return mem[ptr].data;
 }
 
 int freeElem(const char * list_name)
 {
-    // Find the table row (searching upto the special entry)
+    // Find the table row
     int row = T.find(list_name);
     if(row == -1) return 0;
 
@@ -240,7 +246,7 @@ int freeElem()
         --T.size;
         ++deleted;
     }
-    if(T.tab[T.size-1].name == "fn_call")
+    if(strcmp(T.tab[T.size-1].name, "fn_call") == 0)
     {
         --T.size;
         ++deleted;
@@ -252,12 +258,13 @@ int freeElem()
 
 void printTable()
 {
-    std::cout << "Table:" << std::endl;
-    std::cout << "Name \t Head \t Tail \t Size" << std::endl;
+    printf("-------------Table-----------\n");
+    printf("Name \t Head \t Tail \t Size\n");
     for (int i = 0; i < T.size; ++i)
     {
-        std::cout << T.tab[i].name << " " << T.tab[i].li.head << " " << T.tab[i].li.tail << " " << T.tab[i].li.size << std::endl;
+        printf("%s \t %d \t %d \t %d\n", T.tab[i].name, T.tab[i].li.head, T.tab[i].li.tail, T.tab[i].li.size);
     }
+    printf("-----------------------------\n");
 }
 
 //------------------------------------------------
@@ -311,12 +318,11 @@ void mergesort(const char * list_name, int start, int end)
     if (start < end)
     {
         int mid = (start + end) / 2;
+        int left_size = mid - start + 1;
+        int right_size = end - mid;
 
-        printTable();
-        std::cout << "mergesort: " << list_name << " " << start << " " << end << std::endl;
 
-        createList("left", mid - start + 1);
-        createList("right", end - mid);
+        createList("left", left_size);
 
         for (int i = start; i <= mid; ++i)
         {
@@ -329,6 +335,26 @@ void mergesort(const char * list_name, int start, int end)
             assignVal("left", i - start, getVal(list_name, i));
         }
 
+        createList("temp", left_size);
+
+        for (int i = 0; i < left_size; ++i)
+        {
+            assignVal("temp", i, getVal("left", i));
+        }
+
+        fn_beg();
+        mergesort("temp", 0, left_size-1);
+        fn_end();
+
+        for (int i = 0; i < left_size; ++i)
+        {
+            assignVal("left", i, getVal("temp", i));
+        }
+
+        freeElem("temp");
+
+
+        createList("right", right_size);
         for (int i = mid + 1; i <= end; ++i)
         {
             int ret = getVal(list_name, i);
@@ -340,13 +366,23 @@ void mergesort(const char * list_name, int start, int end)
             assignVal("right", i - mid - 1, getVal(list_name, i));
         }
 
-        fn_beg();
-        mergesort("left", start, mid);
-        fn_end();
+        createList("temp", right_size);
+
+        for (int i = 0; i < right_size; ++i)
+        {
+            assignVal("temp", i, getVal("right", i));
+        }
 
         fn_beg();
-        mergesort("right", mid + 1, end);
+        mergesort("temp", 0, right_size - 1);
         fn_end();
+
+        for(int i = 0; i < right_size; ++i)
+        {
+            assignVal("right", i, getVal("temp", i));
+        }
+
+        freeElem("temp");
 
         fn_beg();
         merge(list_name, "left", "right", mid - start + 1, end - mid);
@@ -359,21 +395,21 @@ int main()
 {
     // Create a list of random numbers of size 100 KB
     srand(time(NULL));
-    size_t size = 100 * 1024;
+    size_t size = (1 << 20);
     createMem(size);
-    createList("mylist", 10);
-    for (int i = 0; i < 10; ++i)
+    createList("mylist", 1000);
+    for (int i = 0; i < 1000; ++i)
     {
         assignVal("mylist", i, rand() % 1000);
     }
 
     // Sort the list
     fn_beg();
-    mergesort("mylist", 0, 9);
+    mergesort("mylist", 0, 999);
     fn_end();
 
     // Print the sorted list
-    for (int i = 0; i < 10; ++i)
+    for (int i = 0; i < 1000; ++i)
     {
         std::cout << getVal("mylist", i) << " ";
     }
