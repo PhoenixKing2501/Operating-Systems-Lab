@@ -4,7 +4,8 @@
 
 //------------------------------------------------
 #include "goodmalloc.hpp"
-#define TABLESIZE (1 << 15)
+constexpr int32_t TABLESIZE = (1 << 15);
+constexpr int32_t NAMESIZE = (1 << 12);
 
 struct Element
 {
@@ -32,7 +33,7 @@ struct List
 
 struct Tablerow
 {
-	char name[1 << 8]{};
+	char name[NAMESIZE]{};
 	List li{};
 
 	Tablerow() = default;
@@ -43,7 +44,7 @@ struct Tablerow
 
 struct Table
 {
-	Tablerow tab[1 << 10]{};
+	Tablerow tab[TABLESIZE]{};
 	int32_t size{0};
 
 	Table() = default;
@@ -86,6 +87,7 @@ List freeList{};
 
 void fn_beg()
 {
+	std::fprintf(stderr, "fn_beg() called\n");
 	// Add a special entry to table
 	if(T.size == TABLESIZE - 1)
 	{
@@ -97,6 +99,7 @@ void fn_beg()
 
 void fn_end()
 {
+	std::fprintf(stderr, "fn_end() called\n");
 	// Remove everything upto the special entry from table using freeElem()
 	// freeElem() also has a separate use case: it can be called in any scope to remove all entries in that scope
 	freeElem();
@@ -108,6 +111,7 @@ void fn_end()
 
 bool createMem(size_t size)
 {
+	std::fprintf(stderr, "createMem(%d) called\n", size);
 	// Allocate memory
 	int32_t eleNum = size / sizeof(Element);
 	try
@@ -138,6 +142,7 @@ bool createMem(size_t size)
 
 bool createList(const char *name, int32_t num_elements)
 {
+	std::fprintf(stderr, "createList(%s, %d) called\n", name, num_elements);
 	if (num_elements > freeList.size)
 	{
 		std::fprintf(stderr, "createList: Not enough memory to create %s\n", name);
@@ -176,6 +181,7 @@ bool createList(const char *name, int32_t num_elements)
 
 bool assignVal(const char *list_name, int32_t idx, int32_t val)
 {
+	std::fprintf(stderr, "assignVal(%s, %d, %d) called\n", list_name, idx, val);
 	// Find the table row
 	int32_t row = T.find(list_name);
 	if (row == -1)
@@ -203,6 +209,7 @@ bool assignVal(const char *list_name, int32_t idx, int32_t val)
 
 int32_t getVal(const char *list_name, int32_t idx)
 {
+	std::fprintf(stderr, "getVal(%s, %d) called\n", list_name, idx);
 	// Find the table row
 	int32_t row = T.find(list_name);
 	if (row == -1)
@@ -231,6 +238,7 @@ int32_t getVal(const char *list_name, int32_t idx)
 
 int32_t freeElem(const char *list_name)
 {
+	std::fprintf(stderr, "freeElem(%s) called\n", list_name);
 	// Find the table row
 	int32_t row = T.find(list_name);
 	if (row == -1)
@@ -251,6 +259,7 @@ int32_t freeElem(const char *list_name)
 
 int32_t freeElem()
 {
+	std::fprintf(stderr, "freeElem() called\n");
 	// Delete everything upto the special entry or
 	// upto the first entry (in case current scope is global scope)
 	int32_t deleted = 0;
@@ -268,6 +277,7 @@ int32_t freeElem()
 
 void printList(const char *list_name)
 {
+	std::fprintf(stderr, "printList(%s) called\n", list_name);
 	// Find the table row
 	int32_t row = T.find(list_name);
 	if (row == -1)
