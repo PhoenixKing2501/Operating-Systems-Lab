@@ -71,7 +71,7 @@ struct Table
 			{
 				return i;
 			}
-			else if (std::strncmp(tab[i].name, "__fn_call", 8) == 0) // Search upto the special entry
+			else if (std::strcmp(tab[i].name, "__fn_call") == 0) // Search upto the special entry
 			{
 				return -1;
 			}
