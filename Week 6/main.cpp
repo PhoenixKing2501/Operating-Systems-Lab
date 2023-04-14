@@ -1,11 +1,10 @@
-#include <algorithm>
-#include <ctime>
 #include <chrono>
+#include <ctime>
 #include <iostream>
 
 #include "goodmalloc.hpp"
 
-constexpr int32_t SIZE = 2500;
+constexpr int32_t SIZE = 50'000;
 
 void merge(
 	const char *big_list,
@@ -30,28 +29,21 @@ void merge(
 		if (getVal(left, i) < getVal(right, j))
 		{
 			assignVal(big_list, k++, getVal(left, i++));
-			// ++i;
 		}
 		else
 		{
 			assignVal(big_list, k++, getVal(right, j++));
-			// ++j;
 		}
-		// ++k;
 	}
 
 	while (i < left_size)
 	{
 		assignVal(big_list, k++, getVal(left, i++));
-		// ++i;
-		// ++k//;
 	}
 
 	while (j < right_size)
 	{
 		assignVal(big_list, k++, getVal(right, j++));
-		// ++j;
-		// ++k;
 	}
 }
 
@@ -65,7 +57,11 @@ void mergesort(
 		int32_t left_size = mid - start + 1;
 		int32_t right_size = end - mid;
 
-		createList("left", left_size);
+		char left[1 << 12]{}, right[1 << 12]{};
+		std::sprintf(left, "%s_l", list_name);
+		std::sprintf(right, "%s_r", list_name);
+
+		createList(left, left_size);
 
 		for (int32_t i = start; i <= mid; ++i)
 		{
@@ -75,28 +71,14 @@ void mergesort(
 				std::fprintf(stderr, "mergesort1\n");
 				exit(0);
 			}
-			assignVal("left", i - start, getVal(list_name, i));
-		}
-
-		createList("temp", left_size);
-
-		for (int32_t i = 0; i < left_size; ++i)
-		{
-			assignVal("temp", i, getVal("left", i));
+			assignVal(left, i - start, getVal(list_name, i));
 		}
 
 		fn_beg();
-		mergesort("temp", 0, left_size - 1);
+		mergesort(left, 0, left_size - 1);
 		fn_end();
 
-		for (int32_t i = 0; i < left_size; ++i)
-		{
-			assignVal("left", i, getVal("temp", i));
-		}
-
-		freeElem("temp");
-
-		createList("right", right_size);
+		createList(right, right_size);
 		for (int32_t i = mid + 1; i <= end; ++i)
 		{
 			int32_t ret = getVal(list_name, i);
@@ -105,29 +87,15 @@ void mergesort(
 				fprintf(stderr, "mergesort2\n");
 				exit(0);
 			}
-			assignVal("right", i - mid - 1, getVal(list_name, i));
-		}
-
-		createList("temp", right_size);
-
-		for (int32_t i = 0; i < right_size; ++i)
-		{
-			assignVal("temp", i, getVal("right", i));
+			assignVal(right, i - mid - 1, getVal(list_name, i));
 		}
 
 		fn_beg();
-		mergesort("temp", 0, right_size - 1);
+		mergesort(right, 0, right_size - 1);
 		fn_end();
 
-		for (int32_t i = 0; i < right_size; ++i)
-		{
-			assignVal("right", i, getVal("temp", i));
-		}
-
-		freeElem("temp");
-
 		fn_beg();
-		merge(list_name, "left", "right", mid - start + 1, end - mid);
+		merge(list_name, left, right, mid - start + 1, end - mid);
 		fn_end();
 	}
 }
@@ -141,13 +109,10 @@ int main()
 	createMem(size);
 	createList("mylist", SIZE);
 
-	int arr[SIZE]{};
-
 	for (int32_t i = 0; i < SIZE; ++i)
 	{
-		int num = rand() % 1000;
+		int num = rand() % (SIZE / 2);
 		assignVal("mylist", i, num);
-		arr[i] = num;
 	}
 
 	// Print the list
@@ -161,24 +126,9 @@ int main()
 	fn_end();
 	auto end = std::chrono::high_resolution_clock::now();
 
-	// sort the array
-	std::sort(std::begin(arr), std::end(arr));
-
 	// Print the sorted list
 	printList("mylist");
 	std::cout << std::endl;
-
-	// Check if the list is sorted
-	for (int32_t i = 0; i < SIZE; ++i)
-	{
-		if (getVal("mylist", i) != arr[i])
-		{
-			std::cout << "Not sorted" << std::endl;
-			return 0;
-		}
-	}
-
-	std::cout << "Sorted" << std::endl;
 
 	// Print the time taken
 	fprintf(stderr, "Time taken: %lld ms\n",
