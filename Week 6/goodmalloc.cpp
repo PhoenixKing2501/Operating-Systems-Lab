@@ -4,6 +4,7 @@
 
 //------------------------------------------------
 #include "goodmalloc.hpp"
+#define TABLESIZE (1 << 15)
 
 struct Element
 {
@@ -86,6 +87,11 @@ List freeList{};
 void fn_beg()
 {
 	// Add a special entry to table
+	if(T.size == TABLESIZE - 1)
+	{
+		std::fprintf(stderr, "fn_beg: Table full\n");
+		exit(EXIT_FAILURE);
+	}
 	T.tab[T.size++] = Tablerow("__fn_call", List());
 }
 
@@ -141,6 +147,12 @@ bool createList(const char *name, int32_t num_elements)
 	if (T.findInScope(name) != -1)
 	{
 		std::fprintf(stderr, "createList: %s already exists in current function scope\n", name);
+		exit(EXIT_FAILURE);
+	}
+
+	if (T.size == TABLESIZE - 1)
+	{
+		std::fprintf(stderr, "createList: Table full\n");
 		exit(EXIT_FAILURE);
 	}
 
