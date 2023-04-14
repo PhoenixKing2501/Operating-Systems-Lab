@@ -354,9 +354,14 @@ ptr_t listPrev(ptr_t ptr)
 	return mem[ptr].prev;
 }
 
-int32_t *listGetElem(ptr_t ptr)
+int32_t listGetElem(ptr_t ptr)
 {
-	return &mem[ptr].data;
+	return mem[ptr].data;
+}
+
+void listSetElem(ptr_t ptr, int32_t val)
+{
+	mem[ptr].data = val;
 }
 
 void printTable()

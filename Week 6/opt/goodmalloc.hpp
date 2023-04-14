@@ -24,6 +24,7 @@ ptr_t listPtr(const char *list_name, int32_t idx);
 ptr_t listEnd(const char *list_name);
 ptr_t listNext(ptr_t ptr);
 ptr_t listPrev(ptr_t ptr);
-int32_t *listGetElem(ptr_t ptr);
+int32_t listGetElem(ptr_t ptr);
+void listSetElem(ptr_t ptr, int32_t val);
 
 #endif // _GOODMALLOC_HPP_

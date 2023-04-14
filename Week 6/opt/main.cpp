@@ -17,14 +17,14 @@ void merge(
 
 	while (left_start != left_end and right_start != right_end)
 	{
-		if (*listGetElem(left_start) < *listGetElem(right_start))
+		if (listGetElem(left_start) < listGetElem(right_start))
 		{
-			*listGetElem(start) = *listGetElem(left_start);
+			listSetElem(start, listGetElem(left_start));
 			left_start = listNext(left_start);
 		}
 		else
 		{
-			*listGetElem(start) = *listGetElem(right_start);
+			listSetElem(start, listGetElem(right_start));
 			right_start = listNext(right_start);
 		}
 		start = listNext(start);
@@ -37,7 +37,7 @@ void merge(
 
 	while (left_start != left_end)
 	{
-		*listGetElem(start) = *listGetElem(left_start);
+		listSetElem(start, listGetElem(left_start));
 		left_start = listNext(left_start);
 		start = listNext(start);
 
@@ -49,7 +49,7 @@ void merge(
 
 	while (right_start != right_end)
 	{
-		*listGetElem(start) = *listGetElem(right_start);
+		listSetElem(start, listGetElem(right_start));
 		right_start = listNext(right_start);
 		start = listNext(start);
 
@@ -84,7 +84,7 @@ void mergesort(
 
 	for (ptr_t i = start, j = listBegin(left); i != mid; i = listNext(i), j = listNext(j))
 	{
-		*listGetElem(j) = *listGetElem(i);
+		listSetElem(j, listGetElem(i));
 
 		// if (i == mid)
 		// 	break;
@@ -97,7 +97,7 @@ void mergesort(
 
 	for (ptr_t i = mid, j = listBegin(right); i != end; i = listNext(i), j = listNext(j))
 	{
-		*listGetElem(j) = *listGetElem(i);
+		listSetElem(j, listGetElem(i));
 
 		// if (i == end)
 		// 	break;
@@ -129,9 +129,8 @@ int main()
 	for (int32_t i = listBegin("mylist"); i != listEnd("mylist"); i = listNext(i))
 	{
 		int num = rand() % (SIZE * 2);
-		*listGetElem(i) = num;
+		listSetElem(i, num);
 	}
-	std::cerr << std::endl;
 
 	// Print the list
 	printList("mylist");
