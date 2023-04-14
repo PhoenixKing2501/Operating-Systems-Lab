@@ -94,6 +94,10 @@ void fn_end()
 	// Remove everything upto the special entry from table using freeElem()
 	// freeElem() also has a separate use case: it can be called in any scope to remove all entries in that scope
 	freeElem();
+	if (std::strcmp(T.tab[T.size - 1].name, "__fn_call") == 0)
+	{
+		--T.size;
+	}
 }
 
 bool createMem(size_t size)
@@ -131,13 +135,13 @@ bool createList(const char *name, int32_t num_elements)
 	if (num_elements > freeList.size)
 	{
 		std::fprintf(stderr, "createList: Not enough memory to create %s\n", name);
-		return false;
+		exit(EXIT_FAILURE);
 	}
 
 	if (T.findInScope(name) != -1)
 	{
 		std::fprintf(stderr, "createList: %s already exists in current function scope\n", name);
-		return false;
+		exit(EXIT_FAILURE);
 	}
 
 	// Find start and end pointers from the freeList
@@ -170,8 +174,8 @@ bool assignVal(const char *list_name, int32_t idx, int32_t val)
 	// Check if index is within the list size
 	if (idx >= l.size)
 	{
-		// fprintf(stderr, "assignVal: Index out of bounds in %s\n", list_name);
-		return false;
+		fprintf(stderr, "assignVal: Index out of bounds in %s\n", list_name);
+		exit(EXIT_FAILURE);
 	}
 
 	// Assign value in the memory
@@ -191,7 +195,8 @@ int32_t getVal(const char *list_name, int32_t idx)
 	int32_t row = T.find(list_name);
 	if (row == -1)
 	{
-		return -1;
+		fprintf(stderr, "getVal: %s not found\n", list_name);
+		exit(EXIT_FAILURE);
 	}
 
 	List l = T.tab[row].li;
@@ -199,8 +204,8 @@ int32_t getVal(const char *list_name, int32_t idx)
 	// Check if index is within the list size
 	if (idx >= l.size)
 	{
-		// fprintf(stderr, "getVal: Index out of bounds in list %s\n", list_name);
-		return -1;
+		fprintf(stderr, "getVal: Index out of bounds in list %s\n", list_name);
+		exit(EXIT_FAILURE);
 	}
 
 	// Get value from the memory, Parse the linked list
@@ -244,12 +249,6 @@ int32_t freeElem()
 
 		if (T.size == 0)
 			return deleted;
-	}
-
-	if (std::strcmp(T.tab[T.size - 1].name, "__fn_call") == 0)
-	{
-		--T.size;
-		++deleted;
 	}
 
 	return deleted;
