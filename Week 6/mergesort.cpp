@@ -1,421 +1,161 @@
+#include <chrono>
+#include <ctime>
 #include <iostream>
-#include <cstdlib>
-#include <cstring>
-#include <time.h>
 
-//------------------------------------------------
+#include "goodmalloc.hpp"
 
-void fn_beg();
-void fn_end();
-bool createMem(size_t size);
-bool createList(const char * name, int num_elements);
-bool assignVal(const char * list_name, int idx, int val);
-int getVal(const char * list_name, int idx);
-int freeElem(const char * list_name);
-int freeElem();
+constexpr int32_t SIZE = 50'000;
 
-struct Element
+void merge(
+	const char *big_list,
+	const char *left_list,
+	const char *right_list)
 {
-    int prev;
-    int next;
-    int data;
+	ptr_t start = listBegin(big_list);
+	ptr_t left_start = listBegin(left_list), left_end = listEnd(left_list);
+	ptr_t right_start = listBegin(right_list), right_end = listEnd(right_list);
 
-    Element() : prev(-1), next(-1), data(0) {}
-    Element(int p, int n, int d = 0) : prev(p), next(n), data(d) {}
-    ~Element() = default;
-};
+	while (left_start != left_end and right_start != right_end)
+	{
+		if (listGetElem(left_start) < listGetElem(right_start))
+		{
+			listSetElem(start, listGetElem(left_start));
+			left_start = listNext(left_start);
+		}
+		else
+		{
+			listSetElem(start, listGetElem(right_start));
+			right_start = listNext(right_start);
+		}
+		start = listNext(start);
 
-struct List
-{
-    int head;
-    int tail;
-    int size;
+		// if (left_start == left_end or right_start == right_end)
+		// 	break;
+	}
 
-    List() : head(-1), tail(-1), size(0) {}
-    List(int h, int t, int s) : head(h), tail(t), size(s) {}
-    ~List() = default;
-};
+	// std::cerr << "Merge1\n";
 
-struct Tablerow
-{
-    char name[1<<8];
-    List li;
+	while (left_start != left_end)
+	{
+		listSetElem(start, listGetElem(left_start));
+		left_start = listNext(left_start);
+		start = listNext(start);
 
-    Tablerow() : name(""), li() {}
-    Tablerow(const char * n, List l) : li(l) 
-    {
-        strcpy(name, n);
-    }
-    ~Tablerow() = default;
-};
+		// if (left_start == left_end)
+		// 	break;
+	}
 
-struct Table
-{
-    Tablerow tab[1<<10];
-    int size;
+	// std::cerr << "Merge2\n";
 
-    Table() : size(0) {}
-    ~Table() = default;
+	while (right_start != right_end)
+	{
+		listSetElem(start, listGetElem(right_start));
+		right_start = listNext(right_start);
+		start = listNext(start);
 
-    int find(const char * name)
-    {
-        for (int i = size-1; i >= 0; --i)   // Search from the end
-        {
-            if (strcmp(tab[i].name, name) == 0)
-            {
-                return i;
-            }
-        }
-        // fprintf(stderr, "Table::find: %s not found\n", name);
-        return -1;
-    }
+		// if (right_start == right_end)
+		// 	break;
+	}
 
-    int findInScope(const char * name)
-    {
-        for (int i = size-1; i >= 0; --i)   // Search from the end
-        {
-            if (strcmp(tab[i].name, name) == 0)
-            {
-                return i;
-            }
-            else if(strncmp(tab[i].name, "fn_call", 8) == 0)   // Search upto the special entry
-            {
-                return -1;
-            }
-        }
-        // fprintf(stderr, "Table::findInScope: %s not found\n", name);
-        return -1;
-    }
-
-};
-
-
-Table T;
-Element * mem;
-List freeList;
-
-
-void fn_beg()
-{
-    // Add a special entry to table
-    T.tab[T.size++] = Tablerow("fn_call", List());
+	// std::cerr << "Merge3\n";
 }
 
-void fn_end()
+void mergesort(
+	const char *list_name, int32_t sz,
+	ptr_t start, ptr_t end)
 {
-    // Remove everything upto the special entry from table using freeElem()
-    // freeElem() also has a separate use case: it can be called in any scope to remove all entries in that scope
-    freeElem();
+	// printTable();
+
+	if (sz <= 1)
+		return;
+
+	int32_t mid = listPtr(list_name, sz / 2);
+	int32_t left_size = sz / 2;
+	int32_t right_size = sz - left_size;
+	// std::fprintf(stderr, "List: %s, Start: %d, Mid: %d, End: %d\n",
+	// 			 list_name, start, mid, end);
+
+	char left[1 << 12]{}, right[1 << 12]{};
+	std::sprintf(left, "%s_l", list_name);
+	std::sprintf(right, "%s_r", list_name);
+
+	createList(left, left_size);
+	// printTable();
+
+	for (ptr_t i = start, j = listBegin(left); i != mid; i = listNext(i), j = listNext(j))
+	{
+		listSetElem(j, listGetElem(i));
+
+		// if (i == mid)
+		// 	break;
+	}
+
+	// std::cerr << "left: \n";
+
+	createList(right, right_size);
+	// printTable();
+
+	for (ptr_t i = mid, j = listBegin(right); i != end; i = listNext(i), j = listNext(j))
+	{
+		listSetElem(j, listGetElem(i));
+
+		// if (i == end)
+		// 	break;
+	}
+
+	// std::cerr << "right: \n";
+
+	fn_beg();
+	mergesort(left, left_size, listBegin(left), listEnd(left));
+	fn_end();
+	fn_beg();
+	mergesort(right, right_size, listBegin(right), listEnd(right));
+	fn_end();
+
+	fn_beg();
+	merge(list_name, left, right);
+	fn_end();
 }
-
-
-
-bool createMem(size_t size)
-{
-    // Allocate memory
-    int eleNum = size / sizeof(Element);
-    mem = new(std::nothrow) Element[eleNum];
-    if(mem == nullptr) return false;
-
-    // Initialize memory
-    for (int i = 0; i < eleNum; i++)
-    {
-        mem[i].next = i + 1;
-        mem[i].prev = i - 1;
-    }
-    mem[eleNum-1].next = -1;
-    
-    // Initialize freeList
-    freeList.head = 0;
-    freeList.tail = eleNum - 1;
-    freeList.size = eleNum;
-
-    return true;
-}
-
-bool createList(const char * name, int num_elements)
-{   
-    if(num_elements > freeList.size)
-    {
-        fprintf(stderr, "createList: Not enough memory to create %s\n", name);
-        return false;
-    }
-
-    if(T.findInScope(name) != -1)
-    {
-        fprintf(stderr, "createList: %s already exists in current function scope\n", name);
-        return false;
-    }
-
-    // Find start and end pointers from the freeList
-    int head = freeList.head;
-    int tail = head;
-    for (int i = 1; i < num_elements; ++i)
-    {
-        tail = mem[tail].next;
-    }
-
-    // Add to table
-    T.tab[T.size++] = Tablerow(name, List(head, tail, num_elements));
-
-    // Update freeList
-    freeList.head = mem[tail].next;
-    freeList.size -= num_elements;
-
-    return true;
-}
-
-bool assignVal(const char * list_name, int idx, int val)
-{
-    // Find the table row
-    int row = T.find(list_name);
-    if(row == -1) return false;
-
-    List l = T.tab[row].li;
-
-    // Check if index is within the list size
-    if (idx >= l.size)
-    {
-        // fprintf(stderr, "assignVal: Index out of bounds in %s\n", list_name);
-        return false;
-    }
-
-    // Assign value in the memory
-    // Find the position by parsing linked list
-    int ptr = l.head;
-    for (int i = 0; i < idx; ++i)
-    {
-        ptr = mem[ptr].next;
-    }
-    mem[ptr].data = val;
-    return true;
-}
-
-int getVal(const char * list_name, int idx)
-{
-    // Find the table row
-    int row = T.find(list_name);
-    if(row == -1)
-    {
-        return -1;
-    }
-
-    List l = T.tab[row].li;
-
-    // Check if index is within the list size
-    if (idx >= l.size)
-    {
-        // fprintf(stderr, "getVal: Index out of bounds in list %s\n", list_name);
-        return -1;
-    }
-
-    // Get value from the memory, Parse the linked list
-    int ptr = l.head;
-    for (int i = 0; i < idx; ++i)
-    {
-        ptr = mem[ptr].next;
-    }
-    return mem[ptr].data;
-}
-
-int freeElem(const char * list_name)
-{
-    // Find the table row
-    int row = T.find(list_name);
-    if(row == -1) return 0;
-
-    List l = T.tab[row].li;
-
-    // Update freeList
-    mem[freeList.tail].next = l.head;
-    freeList.size += l.size;
-    freeList.tail = l.tail;
-
-    // Remove from table
-    T.tab[row] = T.tab[--T.size];
-
-    return 1;
-}
-
-int freeElem()
-{
-    // Delete everything upto the special entry or upto the first entry (in case current scope is global scope)
-    int deleted = 0;
-    while(strcmp(T.tab[T.size-1].name, "fn_call") != 0 || T.size == 0)
-    {
-        --T.size;
-        ++deleted;
-    }
-    if(strcmp(T.tab[T.size-1].name, "fn_call") == 0)
-    {
-        --T.size;
-        ++deleted;
-    }
-
-    return deleted;
-}
-
-
-void printTable()
-{
-    printf("-------------Table-----------\n");
-    printf("Name \t Head \t Tail \t Size\n");
-    for (int i = 0; i < T.size; ++i)
-    {
-        printf("%s \t %d \t %d \t %d\n", T.tab[i].name, T.tab[i].li.head, T.tab[i].li.tail, T.tab[i].li.size);
-    }
-    printf("-----------------------------\n");
-}
-
-//------------------------------------------------
-
-
-
-
-
-void merge(const char * big_list, const char * left, const char * right, int left_size, int right_size)
-{
-    int i = 0, j = 0, k = 0;
-    while (i < left_size && j < right_size)
-    {
-        int ret = getVal(left, i);
-        int ret2 = getVal(right, j);
-        if(ret == -1 || ret2 == -1) 
-        {
-            fprintf(stderr, "merge\n");
-            exit(0);
-        }
-        if (getVal(left, i) < getVal(right, j))
-        {
-            assignVal(big_list, k, getVal(left, i));
-            ++i;
-        }
-        else
-        {
-            assignVal(big_list, k, getVal(right, j));
-            ++j;
-        }
-        ++k;
-    }
-
-    while (i < left_size)
-    {
-        assignVal(big_list, k, getVal(left, i));
-        ++i;
-        ++k;
-    }
-
-    while (j < right_size)
-    {
-        assignVal(big_list, k, getVal(right, j));
-        ++j;
-        ++k;
-    }
-}
-
-void mergesort(const char * list_name, int start, int end)
-{
-    if (start < end)
-    {
-        int mid = (start + end) / 2;
-        int left_size = mid - start + 1;
-        int right_size = end - mid;
-
-
-        createList("left", left_size);
-
-        for (int i = start; i <= mid; ++i)
-        {
-            int ret = getVal(list_name, i);
-            if(ret == -1)
-            {
-                fprintf(stderr, "mergesort1\n");
-                exit(0);
-            }
-            assignVal("left", i - start, getVal(list_name, i));
-        }
-
-        createList("temp", left_size);
-
-        for (int i = 0; i < left_size; ++i)
-        {
-            assignVal("temp", i, getVal("left", i));
-        }
-
-        fn_beg();
-        mergesort("temp", 0, left_size-1);
-        fn_end();
-
-        for (int i = 0; i < left_size; ++i)
-        {
-            assignVal("left", i, getVal("temp", i));
-        }
-
-        freeElem("temp");
-
-
-        createList("right", right_size);
-        for (int i = mid + 1; i <= end; ++i)
-        {
-            int ret = getVal(list_name, i);
-            if(ret == -1)
-            {
-                fprintf(stderr, "mergesort2\n");
-                exit(0);
-            }
-            assignVal("right", i - mid - 1, getVal(list_name, i));
-        }
-
-        createList("temp", right_size);
-
-        for (int i = 0; i < right_size; ++i)
-        {
-            assignVal("temp", i, getVal("right", i));
-        }
-
-        fn_beg();
-        mergesort("temp", 0, right_size - 1);
-        fn_end();
-
-        for(int i = 0; i < right_size; ++i)
-        {
-            assignVal("right", i, getVal("temp", i));
-        }
-
-        freeElem("temp");
-
-        fn_beg();
-        merge(list_name, "left", "right", mid - start + 1, end - mid);
-        fn_end();
-    }
-}
-
 
 int main()
 {
-    // Create a list of random numbers of size 100 KB
-    srand(time(NULL));
-    size_t size = (1 << 20);
-    createMem(size);
-    createList("mylist", 1000);
-    for (int i = 0; i < 1000; ++i)
-    {
-        assignVal("mylist", i, rand() % 1000);
-    }
+	// Create a list of random numbers of size 250 MB
+	// srand(time(nullptr));
 
-    // Sort the list
-    fn_beg();
-    mergesort("mylist", 0, 999);
-    fn_end();
+	size_t size = (250ull << 20);
+	createMem(size);
+	createList("mylist", SIZE);
 
-    // Print the sorted list
-    for (int i = 0; i < 1000; ++i)
-    {
-        std::cout << getVal("mylist", i) << " ";
-    }
-    std::cout << std::endl;
+	for (int32_t i = listBegin("mylist"); i != listEnd("mylist"); i = listNext(i))
+	{
+		int num = rand() % (SIZE * 2);
+		listSetElem(i, num);
+	}
 
+	// Print the list
+	printList("mylist");
+	std::cout << std::endl;
 
+	// printTable();
 
-    return 0;
+	// std::fprintf(stderr, "Start: %d, End: %d\n", listBegin("mylist"), listEnd("mylist"));
+
+	// Sort the list
+	auto start = std::chrono::high_resolution_clock::now();
+	fn_beg();
+	mergesort("mylist", SIZE, listBegin("mylist"), listEnd("mylist"));
+	fn_end();
+	auto end = std::chrono::high_resolution_clock::now();
+
+	// Print the sorted list
+	printList("mylist");
+	std::cout << std::endl;
+
+	// Print the time taken
+	fprintf(stderr, "Time taken: %lld ms\n",
+			std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count());
+
+	freeElem();
+
+	deleteMem();
 }
