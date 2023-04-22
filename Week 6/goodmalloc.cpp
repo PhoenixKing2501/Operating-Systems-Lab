@@ -97,10 +97,10 @@ void fn_beg()
 
 void fn_end()
 {
-	std::fprintf(stdout, "fn_end() called\n");
+	// std::fprintf(stdout, "fn_end() called\n");
 	// Remove everything upto the special entry from table using freeElem()
 	// freeElem() also has a separate use case: it can be called in any scope to remove all entries in that scope
-	freeElem();
+	// freeElem();
 	if (std::strcmp(T.tab[T.size - 1].name, "__fn_call") == 0)
 	{
 		--T.size;

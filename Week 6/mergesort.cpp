@@ -4,7 +4,7 @@
 
 #include "goodmalloc.hpp"
 
-constexpr int32_t SIZE = 50'000;
+constexpr int32_t SIZE = 10000;
 
 void merge(
 	const char *big_list,
@@ -120,9 +120,10 @@ void mergesort(
 int main()
 {
 	// Create a list of random numbers of size 250 MB
-	// srand(time(nullptr));
+	srand(65);
+	freopen("/dev/null","w",stdout);
 
-	size_t size = (250ull << 20);
+	int size = (250ull << 20);
 	createMem(size);
 	createList("mylist", SIZE);
 
@@ -152,10 +153,10 @@ int main()
 	std::cout << std::endl;
 
 	// Print the time taken
-	fprintf(stderr, "Time taken: %lld ms\n",
+	fprintf(stderr, "Time taken: %ld ms\n",
 			std::chrono::duration_cast<std::chrono::milliseconds>(end - start).count());
 
-	freeElem();
+	// freeElem();
 
 	deleteMem();
 }

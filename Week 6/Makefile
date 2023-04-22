@@ -13,8 +13,8 @@ mergesort: $(OBJ) $(HEADERS)
 
 time: mergesort
 	>times.txt; for i in {1..100}; do echo "Iter $$i"; ./mergesort > /dev/null 2>> times.txt ; done
-	gawk '{print $$3}' times.txt | gawk '{s+=$$1} END {print "Avg Time: " s/NR " ms"}'
+	gawk '{print $$3}' times.txt | gawk '{s+=$$1} END {print "Avg Time: " s/NR " ms">>"all_times.txt"}'
 
 clean:
-	-rm mergesort *.o
+	-rm mergesort *.o *.txt
 
