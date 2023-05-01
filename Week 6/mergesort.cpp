@@ -126,7 +126,7 @@ int main()
 	createMem(size);
 	createList("mylist", SIZE);
 
-	for (int32_t i = listBegin("mylist"); i != listEnd("mylist"); i = listNext(i))
+	for (ptr_t i = listBegin("mylist"); i != listEnd("mylist"); i = listNext(i))
 	{
 		int num = rand() % (SIZE * 2);
 		listSetElem(i, num);
